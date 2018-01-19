@@ -1,20 +1,21 @@
-import React from "react"
-import Radium from "radium"
+import React from 'react'
+import Radium from 'radium'
 
-import { connect } from "react-redux"
+import { connect } from 'react-redux'
 
-import * as counterActions from "../actions/counterActions"
-import * as githubActions from "../actions/githubActions"
-import Headline from "../components/Headline"
-import GithubRepos from "../components/GithubRepos"
+import * as counterActions from '../actions/counterActions'
+import * as githubActions from '../actions/githubActions'
+import Headline from '../components/Headline'
+import GithubRepos from '../components/GithubRepos'
+import Editor from '../components/Editor'
 
 const styles = {
   button: {
-    cursor: "pointer",
+    cursor: 'pointer',
   },
   counter: {
-    color: "blue",
-    fontSize: "20px",
+    color: 'blue',
+    fontSize: '20px',
   }
 }
 
@@ -39,9 +40,9 @@ export default class AppContainer extends React.Component {
 
   renderLoading() {
     return (
-      <div className="container">
-        <div className="row">
-          <div className="col-sm-12">
+      <div className='container'>
+        <div className='row'>
+          <div className='col-sm-12'>
             Loading...
           </div>
         </div>
@@ -51,18 +52,19 @@ export default class AppContainer extends React.Component {
 
   render() {
     let { counters, github } = this.props
-    if (github.isLoadingRepos || github.repos === undefined) {
-      return this.renderLoading()
-    }
+    //if (github.isLoadingRepos || github.repos === undefined) {
+//      return this.renderLoading()
+  //  }
     return (
-      <div className="container">
-        <div className="row">
-          <div className="col-sm-12">
+      <div className='container'>
+        <div className='row'>
+          <div className='col-sm-12'>
             <Headline>Sample App!</Headline>
+            <Editor/>
             <div style={[styles.button]} onClick={() => this.handleClick()}>INCREASE</div>
             <p style={[styles.counter]}> {counters.clicks}</p>
             <p>{process.env.BASE_API_URL}</p>
-            {github.repos !== undefined && <GithubRepos repos={github.repos} />}
+         //   {github.repos !== undefined && <GithubRepos repos={github.repos} />}
           </div>
         </div>
       </div>
