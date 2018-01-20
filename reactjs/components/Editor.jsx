@@ -17,21 +17,26 @@ __themes.forEach((theme) => {
 
 
 const styles = {
-    editor: {
-        width: '-1px'
+    container: {
+        width: '100%',
+        height: '100%'
     },
-    infoBar: {
+    editor: {
+        width: '100%',
+        height: 'calc(100% - 20px)'
+    },
+    bar: {
         height: '20px',
         backgroundColor: '#08B',
         color: '#FFF'
     },
-    infoBarElement: {
-        cursor: 'pointer',
-        verticalAlign: 'middle'
+    propertyContainer: {
+        display: 'inline-block',
+        width: '120px',
+        paddingLeft: '10px',
     },
-    rightInfoBarElement: {
-        float: 'right',
-        verticalAlign: 'middle'
+    property: {
+        cursor: 'pointer'
     }
 }
 
@@ -42,14 +47,18 @@ export default class Editor extends React.Component {
     constructor(props) {
         super(props)
         this.value = ''
+
         this.themes = ['github', 'xcode', 'monokai', 'terminal']
         this.fontSizes = [12, 13, 14, 16, 18, 20, 25, 30]
+
         this.themeIndex = 0
         this.fontSizeIndex = 0
+
         this.state = {
             theme: this.themes[0],
             fontSize: this.fontSizes[0]
         }
+
         // binds
         this.onValueChange = this.onValueChange.bind(this)
         this.nextTheme = this.nextTheme.bind(this)
@@ -72,7 +81,7 @@ export default class Editor extends React.Component {
 
     render() {
         return (
-            <div className='col-md-12' >
+            <div style={styles.container}>
                 <AceEditor style={styles.editor}
                     name='editor'
                     mode='python'
@@ -81,20 +90,21 @@ export default class Editor extends React.Component {
                     theme={this.state.theme}
                     fontSize={this.state.fontSize}
                 />
-                <div className='col-md-12' style={styles.infoBar}
-                >
-                    <div style={styles.infoBarElement}
-                        onClick={this.nextTheme}
-                    >
-                        {this.state.theme}
+                <div style={styles.bar}>
+                    <div style={styles.propertyContainer}>
+                        <span style={styles.property}
+                            onClick={this.nextTheme}>
+                            Theme: {this.state.theme}
+                        </span>
                     </div>
-                    <div style={styles.infoBarElement}
-                        onClick={this.nextFontSize}
-                    >
-                        {this.state.fontSize}
+                    <div style={styles.propertyContainer}>
+                        <span style={styles.property}
+                            onClick={this.nextFontSize}>
+                            Font: {this.state.fontSize}
+                        </span>
                     </div>
                 </div>
-            </div >
+            </div>
         )
     }
 }

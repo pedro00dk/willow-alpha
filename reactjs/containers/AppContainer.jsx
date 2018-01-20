@@ -1,73 +1,30 @@
 import React from 'react'
 import Radium from 'radium'
 
-import { connect } from 'react-redux'
-
-import * as counterActions from '../actions/counterActions'
-import * as githubActions from '../actions/githubActions'
-import Headline from '../components/Headline'
-import GithubRepos from '../components/GithubRepos'
 import Editor from '../components/Editor'
 
+
+
 const styles = {
-  button: {
-    cursor: 'pointer',
-  },
-  counter: {
-    color: 'blue',
-    fontSize: '20px',
-  }
+    button: {
+        cursor: 'pointer',
+    },
+    counter: {
+        color: 'blue',
+        fontSize: '20px',
+    }
 }
 
-@connect(state => ({
-  counters: state.counters,
-  github: state.github
-}))
+
+
 @Radium
 export default class AppContainer extends React.Component {
 
-  componentDidMount() {
-    let { dispatch, github } = this.props
-    if (!github.isLoadingRepos && github.repos === undefined) {
-      dispatch(githubActions.fetchRepos())
+    render() {
+        return (
+            <div style={{width:'100vw', height: '100vh'}}>
+                <Editor />
+            </div>
+        )
     }
-  }
-
-  handleClick() {
-    let { dispatch } = this.props;
-    dispatch(counterActions.increaseCounter())
-  }
-
-  renderLoading() {
-    return (
-      <div className='container'>
-        <div className='row'>
-          <div className='col-sm-12'>
-            Loading...
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  render() {
-    let { counters, github } = this.props
-    //if (github.isLoadingRepos || github.repos === undefined) {
-//      return this.renderLoading()
-  //  }
-    return (
-      <div className='container'>
-        <div className='row'>
-          <div className='col-sm-12'>
-            <Headline>Sample App!</Headline>
-            <Editor/>
-            <div style={[styles.button]} onClick={() => this.handleClick()}>INCREASE</div>
-            <p style={[styles.counter]}> {counters.clicks}</p>
-            <p>{process.env.BASE_API_URL}</p>
-         //   {github.repos !== undefined && <GithubRepos repos={github.repos} />}
-          </div>
-        </div>
-      </div>
-    )
-  }
 }
