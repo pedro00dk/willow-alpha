@@ -1,6 +1,4 @@
 ### Mine
-# Django
-db.sqlite3
 # package lock
 package-lock.json
 # webpack
