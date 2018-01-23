@@ -9,7 +9,7 @@ __langs.forEach((lang) => {
     require('brace/mode/' + lang)
     require('brace/snippets/' + lang)
 })
-const __themes = ['github', 'xcode', 'monokai', 'terminal']
+const __themes = ['monokai', 'github', 'terminal', 'xcode']
 __themes.forEach((theme) => {
     require('brace/theme/' + theme)
 })
@@ -23,7 +23,7 @@ const styles = {
     },
     editor: {
         width: '100%',
-        height: 'calc(100% - 20px)'
+        height: '500px' // 'calc(100% - 20px)'
     },
     bar: {
         height: '20px',
@@ -48,7 +48,7 @@ export default class Editor extends React.Component {
         super(props)
         this.value = ''
 
-        this.themes = ['github', 'xcode', 'monokai', 'terminal']
+        this.themes = ['monokai', 'github', 'terminal', 'xcode']
         this.fontSizes = [12, 13, 14, 16, 18, 20, 25, 30]
 
         this.themeIndex = 0
@@ -81,7 +81,7 @@ export default class Editor extends React.Component {
 
     render() {
         return (
-            <div style={styles.container}>
+            <div className='col-md-12' style={styles.container}>
                 <AceEditor style={styles.editor}
                     name='editor'
                     mode='python'
