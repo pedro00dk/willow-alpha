@@ -15,33 +15,6 @@ __themes.forEach((theme) => {
 })
 
 
-
-const styles = {
-    container: {
-        width: '100%',
-        height: '100%'
-    },
-    editor: {
-        width: '100%',
-        height: '500px' // 'calc(100% - 20px)'
-    },
-    bar: {
-        height: '20px',
-        backgroundColor: '#08B',
-        color: '#FFF'
-    },
-    propertyContainer: {
-        display: 'inline-block',
-        width: '120px',
-        paddingLeft: '10px',
-    },
-    property: {
-        cursor: 'pointer'
-    }
-}
-
-
-
 export default class Editor extends React.Component {
 
     constructor(props) {
@@ -81,27 +54,29 @@ export default class Editor extends React.Component {
 
     render() {
         return (
-            <div className='col-md-12' style={styles.container}>
-                <AceEditor style={styles.editor}
-                    name='editor'
-                    mode='python'
-                    value={this.value}
-                    onChange={this.onValueChange}
-                    theme={this.state.theme}
-                    fontSize={this.state.fontSize}
-                />
-                <div style={styles.bar}>
-                    <div style={styles.propertyContainer}>
-                        <span style={styles.property}
-                            onClick={this.nextTheme}>
-                            Theme: {this.state.theme}
-                        </span>
+            <div className='row no-gutters'>
+                <div className='col'>
+                    <div className='row'>
+                        <AceEditor className='col'
+                            name='editor'
+                            mode='python'
+                            value={this.value}
+                            onChange={this.onValueChange}
+                            theme={this.state.theme}
+                            fontSize={this.state.fontSize}
+                        />
                     </div>
-                    <div style={styles.propertyContainer}>
-                        <span style={styles.property}
-                            onClick={this.nextFontSize}>
-                            Font: {this.state.fontSize}
-                        </span>
+                    <div className='row justify-content-start text-light' style={{ height: '20px', backgroundColor: '#222' }}>
+                        <div className='col-auto'>
+                            <span style={{ cursor: 'pointer' }} onClick={this.nextTheme}>
+                                Theme: {this.state.theme}
+                            </span>
+                        </div>
+                        <div className='col-auto'>
+                            <span style={{ cursor: 'pointer' }} onClick={this.nextFontSize}>
+                                Font: {this.state.fontSize}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>

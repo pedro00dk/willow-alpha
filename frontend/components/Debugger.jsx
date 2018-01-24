@@ -9,43 +9,30 @@ import restartButton from './debugger/restartButton.png'
 import stopButton from './debugger/stopButton.png'
 
 
-
-const styles = {
-    bar: {
-        height: '35px',
-        backgroundColor: '#333'
-    },
-    button: {
-        width: '35px',
-        height: '35px'
-    }
-}
-
-
-
 export default class Debugger extends React.Component {
 
     render() {
+        let buttonSize = { width: '35px', height: '35px' }
         return (
-            <div className='col-md-12' style={styles.bar}>
-                <img style={styles.button}
-                    src={playButton}
-                />
-                <img style={styles.button}
-                    src={stepoverButton}
-                />
-                <img style={styles.button}
-                    src={stepintoButton}
-                />
-                <img style={styles.button}
-                    src={stepoutButton}
-                />
-                <img style={styles.button}
-                    src={restartButton}
-                />
-                <img style={styles.button}
-                    src={stopButton}
-                />
+            <div className='row no-gutters' style={{ backgroundColor: '#222' }}>
+                <div className='col-auto'>
+                    <img style={buttonSize} src={playButton} />
+                </div>
+                <div className='col-auto'>
+                    <img style={buttonSize} src={stepoverButton} />
+                </div>
+                <div className='col-auto'>
+                    <img style={buttonSize} src={stepintoButton} />
+                </div>
+                <div className='col-auto'>
+                    <img style={buttonSize} src={stepoutButton} />
+                </div>
+                <div className='col-auto'>
+                    <img style={buttonSize} src={restartButton} />
+                </div>
+                <div className='col-auto'>
+                    <img style={buttonSize} src={stopButton} />
+                </div>
             </div>
         )
     }

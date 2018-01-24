@@ -13,24 +13,10 @@ export default class AppContainer extends React.Component {
         return (
             <div>
                 <Header />
-                <div className='content'>
-                    <div className='row'>
-                        <div className='col-sm-12'>
-                            <Debugger />
-                        </div>
-                        <div className='col-sm-6'>
-                            <div className='row'>
-                                <Editor />
-                            </div>
-                        </div>
+                <Debugger />
+                <Editor />
 
-                        <div className='col-sm-6'>
-                            <div className='row'>
-                                <div className='col-sm-12'>hello</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
             </div>
         )
     }
