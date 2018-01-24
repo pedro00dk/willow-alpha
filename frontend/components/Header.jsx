@@ -1,74 +1,51 @@
+// #TODO Exercises dropdown
+
 import React from 'react'
 import { render } from 'react-dom'
 import Radium from 'radium'
 
-import willowLogo from './header/willowLogo.png'
-
-
-
-const styles = {
-    header: {
-        height: '75px',
-        backgroundColor: '#222'
-    },
-    headerElement: {
-        display: 'inline-block',
-        height: '100%',
-        marginLeft: '5px',
-        marginRight: '5px',
-        verticalAlign: 'middle',
-        textAlign: 'center'
-    },
-    navegableHeaderElementOver: {
-        display: 'inline-block',
-        height: '100%',
-        marginLeft: '5px',
-        marginRight: '5px',
-        verticalAlign: 'middle',
-        textAlign: 'center',
-        cursor: 'pointer',
-        ':hover': 'background-color: #111'
-    },
-    headerLogo: {
-        height: '100%',
-        width: '100px'
-    },
-    headerText: {
-        marginTop: '18px',
-        marginBottom: '12px',
-        color: '#AAA'
-    },
-    optionText: {
-        marginTop: '22px',
-        marginBottom: '8px',
-        color: '#AAA'
-    }
-
-}
-
+import logo from './header/logo.png'
 
 
 export default class Header extends React.Component {
 
+    constructor(props) {
+        super(props)
+
+        this.themes = ['dark', 'light']
+        this.state = {
+            theme: this.themes[0]
+        }
+    }
+
     render() {
         return (
-            <div className='col-sm-12' style={styles.header}>
-                <div style={styles.navegableHeaderElement}>
-                    <img style={styles.headerLogo}
-                        src={willowLogo}
-                    />
+            <nav className={'navbar navbar-expand navbar-' + this.state.theme + ' bg-' + this.state.theme}>
+                <a className='navbar-brand' href='#'>
+                    <img width='60px' height='45px' src={logo} />
+                </a>
+                <button className='navbar-toggler' type='button' dataToggle='collapse' dataTarget='#navbarNavAltMarkup' ariaControls='navbarNavAltMarkup' aria-expanded='false' aria-label='Toggle navigation'>
+                    <span className='navbar-toggler-icon'></span>
+                </button>
+                <div className='collapse navbar-collapse' id='navbarNavAltMarkup'>
+                    <div className='navbar-nav'>
+                        <a className='nav-item nav-link active' href='#'>Willow <span className='sr-only'>(current)</span></a>
+                        <li className='nav-item'>
+                            <a className='nav-link dropdown-toggle' href='#' dataToggle='dropdown' ariaHaspopup='true' ariaExpanded='false'>
+                                Exercises
+                            </a>
+                            <div className='dropdown-menu'>
+                                <a className='dropdown-item' href='#'>Exercise 1</a>
+                                <a className='dropdown-item' href='#'>Exercise 2</a>
+                                <a className='dropdown-item' href='#'>Exercise 3</a>
+                            </div>
+                        </li>
+                    </div>
+                    <div className='navbar-nav ml-auto'>
+                        <a className='nav-item nav-link disabled' href='#'>Log in</a>
+                    </div>
                 </div>
-                <div style={styles.headerElement}>
-                    <h1 style={styles.headerText}>Willow</h1>
-                </div>
-                <div style={{ ...styles.navegableHeaderElementOver, float: 'right' }}>
-                    <h2 style={styles.optionText}>Log in</h2>
-                </div>
-                <div style={{...styles.navegableHeaderElementOver, float: 'right' }}>
-                    <h2 style={styles.optionText}>Exercises</h2>
-                </div>
-            </div>
-
+            </nav>
         )
     }
 }
