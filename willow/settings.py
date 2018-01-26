@@ -40,6 +40,7 @@ INSTALLED_APPS = [
 
     'backend',
 
+    'social_django',
     'rest_framework',
     'webpack_loader'
 ]
