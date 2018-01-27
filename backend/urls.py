@@ -5,13 +5,13 @@ from rest_framework import routers
 from backend.views import generated_viewsets
 
 
-router = routers.DefaultRouter()
+viewsets_routes = routers.DefaultRouter()
 for name, viewset in generated_viewsets.items():
-    router.register(name, viewset)
+    viewsets_routes.register(name, viewset)
 
 urlpatterns = [
     path('', generic.TemplateView.as_view(template_name='index.html')),
+    re_path(r'^', include(viewsets_routes.urls)),
 
-    re_path(r'^', include(router.urls)),
     re_path(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]
