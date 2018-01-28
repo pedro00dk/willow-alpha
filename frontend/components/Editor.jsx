@@ -1,85 +1,80 @@
 import React from 'react'
 import { render } from 'react-dom'
+import { Grid, Row, Col, DropdownButton, MenuItem } from 'react-bootstrap'
 
 import brace from 'brace'
 import AceEditor from 'react-ace'
 
-const __langs = ['python']
-__langs.forEach((lang) => {
-    require('brace/mode/' + lang)
-    require('brace/snippets/' + lang)
-})
-const __themes = ['monokai', 'github', 'terminal', 'xcode']
-__themes.forEach((theme) => {
-    require('brace/theme/' + theme)
-})
+const __modes = ['python', 'text']
+__modes.forEach(mode => require('brace/mode/' + mode))
+const __themes = ['xcode', 'github', 'monokai', 'terminal']
+__themes.forEach(theme => require('brace/theme/' + theme))
 
+
+var __editor_id_index = 0
 
 export default class Editor extends React.Component {
 
     constructor(props) {
         super(props)
-        this.value = ''
 
-        this.themes = ['monokai', 'github', 'terminal', 'xcode']
-        this.fontSizes = [12, 13, 14, 16, 18, 20, 25, 30]
-
-        this.themeIndex = 0
-        this.fontSizeIndex = 0
+        this.modes = __modes
+        this.themes = __themes
+        this.fonts = [14, 16, 18, 20, 25, 30]
 
         this.state = {
-            theme: this.themes[0],
-            fontSize: this.fontSizes[0]
+            mode: this.props.mode !== undefined ? this.props.mode : this.modes[0],
+            theme: this.props.theme !== undefined ? this.props.theme : this.themes[0],
+            font: this.props.font !== undefined ? this.props.font : this.fonts[0]
         }
+        this.value = this.props.value !== undefined ? this.props.value : ''
 
         // binds
         this.onValueChange = this.onValueChange.bind(this)
-        this.nextTheme = this.nextTheme.bind(this)
-        this.nextFontSize = this.nextFontSize.bind(this)
     }
 
     onValueChange(value) {
         this.value = value
     }
 
-    nextTheme() {
-        this.themeIndex = (this.themeIndex + 1) % this.themes.length
-        this.setState({ theme: this.themes[this.themeIndex] })
-    }
-
-    nextFontSize() {
-        this.fontSizeIndex = (this.fontSizeIndex + 1) % this.fontSizes.length
-        this.setState({ fontSize: this.fontSizes[this.fontSizeIndex] })
-    }
-
     render() {
         return (
-            <div className='row no-gutters'>
-                <div className='col'>
-                    <div className='row'>
-                        <AceEditor className='col'
-                            name='editor'
-                            mode='python'
+            <Grid fluid>
+                <Row>
+                    <Col>
+                        <AceEditor className='col-12' style={{ width: '100%' }}
+                            name={'editor-' + __editor_id_index++}
+                            mode={this.state.mode}
+                            theme={this.state.theme}
+                            fontSize={this.state.font}
                             value={this.value}
                             onChange={this.onValueChange}
-                            theme={this.state.theme}
-                            fontSize={this.state.fontSize}
                         />
-                    </div>
-                    <div className='row justify-content-start text-light' style={{ height: '20px', backgroundColor: '#222' }}>
-                        <div className='col-auto'>
-                            <span style={{ cursor: 'pointer' }} onClick={this.nextTheme}>
-                                Theme: {this.state.theme}
-                            </span>
-                        </div>
-                        <div className='col-auto'>
-                            <span style={{ cursor: 'pointer' }} onClick={this.nextFontSize}>
-                                Font: {this.state.fontSize}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                    </Col>
+                </Row>
+                <Row>
+                    <Col>
+                        <DropdownButton dropup title={'mode: ' + this.state.mode}>
+                            {this.modes.map((mode, i) => {
+                                if (mode === this.state.mode) return <MenuItem disabled key={i}>{mode}</MenuItem>
+                                return <MenuItem key={i} onClick={() => this.setState({ mode: mode })}>{mode}</MenuItem>
+                            })}
+                        </DropdownButton>
+                        <DropdownButton dropup title={'theme: ' + this.state.theme}>
+                            {this.themes.map((theme, i) => {
+                                if (theme === this.state.theme) return <MenuItem disabled key={i}>{theme}</MenuItem>
+                                return <MenuItem key={i} onClick={() => this.setState({ theme: theme })}>{theme}</MenuItem>
+                            })}
+                        </DropdownButton>
+                        <DropdownButton dropup title={'font: ' + this.state.font}>
+                            {this.fonts.map((font, i) => {
+                                if (font === this.state.font) return <MenuItem disabled key={i}>{font}</MenuItem>
+                                return <MenuItem key={i} onClick={() => this.setState({ font: font })}>{font}</MenuItem>
+                            })}
+                        </DropdownButton>
+                    </Col>
+                </Row>
+            </Grid>
         )
     }
 }
