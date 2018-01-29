@@ -7,4 +7,4 @@ from backend import models
 class ExerciseSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Exercise
-        fields = ('name', 'readme', 'input_ex')
+        fields = '__all__'
