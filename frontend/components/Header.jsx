@@ -4,6 +4,7 @@ import { Navbar, NavbarBrand, Nav, NavItem, NavDropdown, MenuItem } from 'react-
 import { connect } from 'react-redux'
 
 import { fetchExercises } from '../reducers/exercise'
+import { selectExercise } from '../reducers/selectExercise'
 
 
 @connect(state => ({ exercise: state.exercise }))
@@ -12,23 +13,27 @@ export default class Header extends React.Component {
     componentDidMount() {
         let { dispatch, exercise } = this.props
         if (!exercise.isFetching && exercise.exercises.length === 0 && exercise.err === undefined)
-        dispatch(fetchExercises())
+            dispatch(fetchExercises())
     }
 
     renderExercises() {
-        let { exercise } = this.props
+        let { dispatch, exercise } = this.props
+
         if (exercise.isFetching) return <MenuItem>Loading...</MenuItem>
         if (exercise.err !== undefined) return <MenuItem>Error</MenuItem>
         if (exercise.exercises.length === 0) return <MenuItem>Exercises empty</MenuItem>
-        return exercise.exercises.map((exercise, i) => <MenuItem>{exercise.name}</MenuItem>)
+        return exercise.exercises.map((exercise, i) => {
+            return <MenuItem key={i} onClick={() => dispatch(selectExercise(exercise.id))}>{exercise.name}</MenuItem>
+        })
     }
 
     render() {
+        let { dispatch } = this.props
         return (
             <Navbar fluid collapseOnSelect style={{ marginBottom: '0px' }}>
                 <Navbar.Header>
                     <Navbar.Brand>
-                        <a href='#'>Willow</a>
+                        <a onClick={() => dispatch(selectExercise(null))}>Willow</a>
                     </Navbar.Brand>
                     <Navbar.Toggle />
                 </Navbar.Header>
