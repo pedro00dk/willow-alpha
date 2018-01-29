@@ -12,9 +12,9 @@ export default class TabEditor extends React.Component {
             <Grid fluid>
                 <Row>
                     <Col>
-                        <Tabs defaultActiveKey={2} id="uncontrolled-tab-example">
+                        <Tabs animation={false} defaultActiveKey={2} id={'uncontrolled-tab-example'}>
                             <Tab eventKey={1} title="Tab 1">
-                                <Editor mode='python' theme='monokai' font={14} value={'import itertools'}></Editor>
+                                <Editor mode='python' theme='monokai' font={14} readonly={true} value={'import itertools'}></Editor>
                             </Tab>
                             <Tab eventKey={2} title="Tab 2">
                                 <Editor mode='python' theme='terminal' font={14} value={'import os'}></Editor>

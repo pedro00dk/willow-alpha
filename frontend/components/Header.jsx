@@ -16,7 +16,7 @@ export default class Header extends React.Component {
                 </Navbar.Header>
                 <Navbar.Collapse>
                     <Nav>
-                        <NavDropdown id='header-dropdown-exercises' title='Exercises'>
+                        <NavDropdown id={'header-dropdown-exercises'} title={'Exercises'}>
                             <MenuItem>Menu Item</MenuItem>
                         </NavDropdown>
                     </Nav>

@@ -11,8 +11,6 @@ const __themes = ['xcode', 'github', 'monokai', 'terminal']
 __themes.forEach(theme => require('brace/theme/' + theme))
 
 
-var __editor_id_index = 0
-
 export default class Editor extends React.Component {
 
     constructor(props) {
@@ -25,7 +23,8 @@ export default class Editor extends React.Component {
         this.state = {
             mode: this.props.mode !== undefined ? this.props.mode : this.modes[0],
             theme: this.props.theme !== undefined ? this.props.theme : this.themes[0],
-            font: this.props.font !== undefined ? this.props.font : this.fonts[0]
+            font: this.props.font !== undefined ? this.props.font : this.fonts[0],
+            readonly: this.props.readonly !== undefined ? this.props.readonly : false
         }
         this.value = this.props.value !== undefined ? this.props.value : ''
 
@@ -42,11 +41,12 @@ export default class Editor extends React.Component {
             <Grid fluid>
                 <Row>
                     <Col>
-                        <AceEditor className='col-12' style={{ width: '100%' }}
-                            name={'editor-' + __editor_id_index++}
+                        <AceEditor className={'col-12'} style={{ width: '100%' }}
+                            name={'editor'}
                             mode={this.state.mode}
                             theme={this.state.theme}
                             fontSize={this.state.font}
+                            readOnly={this.state.readonly}
                             value={this.value}
                             onChange={this.onValueChange}
                         />
