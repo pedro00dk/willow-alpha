@@ -13,13 +13,13 @@ export default class TabEditor extends React.Component {
                 <Row>
                     <Col>
                         <Tabs animation={false} defaultActiveKey={2} id={'uncontrolled-tab-example'}>
-                            <Tab eventKey={1} title="Tab 1">
+                            <Tab eventKey={1} title='Tab 1'>
                                 <Editor mode='python' theme='monokai' font={14} readonly={true} value={'import itertools'}></Editor>
                             </Tab>
-                            <Tab eventKey={2} title="Tab 2">
+                            <Tab eventKey={2} title='Tab 2'>
                                 <Editor mode='python' theme='terminal' font={14} value={'import os'}></Editor>
                             </Tab>
-                            <Tab eventKey={3} title="Tab 3" disabled>
+                            <Tab eventKey={3} title='Tab 3' disabled>
                                 <Editor mode='text' theme='xcode' font={12} value={'readme file'}></Editor>
                             </Tab>
                         </Tabs>

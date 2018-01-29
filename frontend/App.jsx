@@ -1,13 +1,27 @@
-import React from "react"
-import { render } from "react-dom"
+import React from 'react'
+import { render } from 'react-dom'
+import { Provider } from 'react-redux'
+import { createStore, compose, applyMiddleware, combineReducers } from 'redux'
+import thunk from 'redux-thunk'
 
-import AppContainer from "./containers/AppContainer"
+import * as reducers from './reducers'
+import AppContainer from './containers/AppContainer'
+
+
+let finalCreateStore = compose(applyMiddleware(thunk), window.devToolsExtension ? window.devToolsExtension() : f => f)
+    (createStore)
+let reducer = combineReducers(reducers)
+let store = finalCreateStore(reducer)
 
 
 class App extends React.Component {
 
     render() {
-        return <AppContainer />
+        return (
+            <Provider store={store}>
+                <AppContainer />
+            </Provider>
+        )
     }
 }
 
