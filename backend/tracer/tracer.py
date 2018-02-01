@@ -1,7 +1,13 @@
+import multiprocessing
+import queue
+import sys
+import threading
+import traceback
+
+import util
+
+
 class Tracer:
-    mp = __import__('multiprocessing')
-    queue = __import__('queue')
-    th = __import__('threading')
 
     def __init__(self, script, input_callback, print_callback):
         self._script = script
@@ -9,24 +15,24 @@ class Tracer:
         self._input_callback = input_callback
         self._print_callback = print_callback
         self._ended = False
-
-        self._info_main_to_sub_queue = Tracer.mp.Queue()
-        self._info_sub_to_main_queue = Tracer.mp.Queue()
-        self._io_main_to_sub_queue = Tracer.mp.Queue()
-        self._io_sub_to_main_queue = Tracer.mp.Queue()
-        self._tracer_subprocess = Tracer.mp.Process(
+        self._info_main_to_sub_queue = multiprocessing.Queue()
+        self._info_sub_to_main_queue = multiprocessing.Queue()
+        self._io_main_to_sub_queue = multiprocessing.Queue()
+        self._io_sub_to_main_queue = multiprocessing.Queue()
+        self._tracer_subprocess = multiprocessing.Process(
             target=_start_tracer_subprocess,
             args=(
                 self._script,
                 self._info_main_to_sub_queue, self._info_sub_to_main_queue,
-                self._io_main_to_sub_queue, self._io_sub_to_main_queue))
+                self._io_main_to_sub_queue, self._io_sub_to_main_queue
+            )
+        )
         self._tracer_subprocess.start()
-
-        self._tracer_io_thread = Tracer.th.Thread(target=self._start_io, args=())
+        self._tracer_io_thread = threading.Thread(target=self._start_io, args=())
         self._tracer_io_thread.start()
 
     def next_info(self):
-        if self._ended:
+        if self._ended or not self._tracer_subprocess.is_alive():
             raise Exception('tracer ended')
         self._info_main_to_sub_queue.put('next')
         info = self._info_sub_to_main_queue.get()
@@ -34,19 +40,23 @@ class Tracer:
             self._ended = True
         return info
 
+    def _stop(self):
+        if self._ended or not self._tracer_subprocess.is_alive():
+            raise Exception('tracer ended')
+        self._info_main_to_sub_queue.put('quit')
+        return self._info_sub_to_main_queue.get() == 'quit'
+
     def _start_io(self):
-        timeout = 0.001
+        timeout = 0.01
         while self._tracer_subprocess.is_alive():
             try:
-                io_action = self._io_sub_to_main_queue.get(timeout=timeout)
+                io_action, value = self._io_sub_to_main_queue.get(timeout=timeout)
                 if io_action == 'input':
-                    prompt = self._io_sub_to_main_queue.get()
-                    expected = self._input_callback(prompt)
+                    expected = self._input_callback(value)
                     self._io_main_to_sub_queue.put(expected)
                 elif io_action == 'print':
-                    text = self._io_sub_to_main_queue.get()
-                    self._print_callback(text)
-            except Tracer.queue.Empty:
+                    self._print_callback(value)
+            except queue.Empty:
                 pass
 
 
@@ -57,13 +67,11 @@ def _start_tracer_subprocess(script, info_main_to_sub_queue, info_sub_to_main_qu
     _SubprocessTracer(
         script,
         info_main_to_sub_queue, info_sub_to_main_queue,
-        io_main_to_sub_queue, io_sub_to_main_queue)
+        io_main_to_sub_queue, io_sub_to_main_queue
+    )
 
 
 class _SubprocessTracer:
-    sys = __import__('sys')
-    tb = __import__('traceback')
-    util = __import__('util')
 
     def __init__(self, script, info_main_to_sub_queue, info_sub_to_main_queue,
                  io_main_to_sub_queue, io_sub_to_main_queue):
@@ -73,9 +81,7 @@ class _SubprocessTracer:
         self.info_sub_to_main_queue = info_sub_to_main_queue
         self.io_main_to_sub_queue = io_main_to_sub_queue
         self.io_sub_to_main_queue = io_sub_to_main_queue
-
         self.bot_frame = None
-
         self.start()
 
     def start(self):
@@ -84,7 +90,7 @@ class _SubprocessTracer:
         exec_backup = exec
         #
         script_globals = {
-            '__name__': '__ma_in__',
+            '__name__': '__main__',
             '__file__': '<script>',
             '__doc__': None,
             '__package__': None,
@@ -93,23 +99,23 @@ class _SubprocessTracer:
             '__cached__': None,
             '__builtins__': globals()['__builtins__'].copy()
         }
-        script_globals['__builtins__']['input'] = _SubprocessTracer.util.SubprocessInput(
-            self.io_main_to_sub_queue, self.io_sub_to_main_queue)
-        script_globals['__builtins__']['print'] = _SubprocessTracer.util.SubprocessPrint(
-            self.io_main_to_sub_queue, self.io_sub_to_main_queue)
-        _SubprocessTracer.util.subprocess_disable_modules(
-            _SubprocessTracer.util.COMMON_DISABLE_MODULES)
-        _SubprocessTracer.util.subprocess_disable_functions(
-            _SubprocessTracer.util.COMMON_DISABLE_FUNCTIONS, script_globals)
+        script_globals['__builtins__']['input'] = util.SubprocessInput(
+            self.io_main_to_sub_queue, self.io_sub_to_main_queue
+        )
+        script_globals['__builtins__']['print'] = util.SubprocessPrint(
+            self.io_main_to_sub_queue, self.io_sub_to_main_queue
+        )
+        util.subprocess_disable_modules(util.COMMON_DISABLE_MODULES)
+        util.subprocess_disable_functions(util.COMMON_DISABLE_FUNCTIONS, script_globals)
         #
-        _SubprocessTracer.sys.settrace(self.trace_dispatch)
+        sys.settrace(self.trace_dispatch)
         try:
             compiled_script = compile_backup(self.script, '<string>', 'exec')
             exec_backup(compiled_script, script_globals)
         except Exception:
             pass
         finally:
-            _SubprocessTracer.sys.settrace(None)
+            sys.settrace(None)
 
     def trace_dispatch(self, frame, event, args):
         action = self.info_main_to_sub_queue.get()
@@ -134,7 +140,7 @@ class _SubprocessTracer:
             args = (
                 args[0],
                 args[1],
-                _SubprocessTracer.tb.format_exception(args[0], args[1], args[2]))
+                traceback.format_exception(args[0], args[1], args[2]))
 
         return {
             'event': event,
@@ -166,14 +172,15 @@ class _SubprocessTracer:
 
 ################################
 def main():
-
-    '''
-raise Exception()
-'''
-    '''
-print(print)
-'''
     script = '''
+
+try:
+    import sys
+except Exception as e:
+    print(e)
+
+print(__name__)
+
 class XYZ:
 
     def __init__(self, x, y, z):
@@ -187,6 +194,13 @@ class XYZ:
     def __str__(self):
         return f'{type(self).__name__}({self.x}, {self.y}, {self.z})'
 
+
+print(XYZ)
+print('dir')
+print(dir())
+print()
+print('vars')
+print(vars())
 
 x = 10
 y = 10
@@ -205,6 +219,7 @@ print(f'sqr_mag of {v} is {sm}')
 raise 'error'
 
 '''
+
     def input_callback(prompt):
         return input(prompt)
 

@@ -9,8 +9,7 @@ class SubprocessInput:
 
     def __call__(self, prompt=''):
         prompt = str(prompt)
-        self.io_sub_to_main_queue.put('input')
-        self.io_sub_to_main_queue.put(prompt)
+        self.io_sub_to_main_queue.put(('input', prompt))
         return self.io_main_to_sub_queue.get()
 
 
@@ -27,9 +26,9 @@ class SubprocessPrint:
         if end is not None and type(end) is not str:
             raise TypeError(f'end must be None or a string, not {type(end)}')
         end = end if end is not None else '\n'
+        values = values if len(values) > 0 else ('',)
         text = reduce((lambda e0, e1: e0 + sep + e1), map((lambda e: str(e)), values)) + end
-        self.io_sub_to_main_queue.put('print')
-        self.io_sub_to_main_queue.put(text)
+        self.io_sub_to_main_queue.put(('print', text))
 
 
 def subprocess_disable_modules(modules):
@@ -64,47 +63,3 @@ COMMON_DISABLE_MODULES = {
 
 
 COMMON_DISABLE_FUNCTIONS = {'compile', 'exec'}
-
-
-###############
-import multiprocessing
-
-
-def func(io_main_to_sub_queue, io_sub_to_main_queue):
-    subprocess_disable_modules(COMMON_DISABLE_MODULES)
-    subprocess_disable_functions(COMMON_DISABLE_FUNCTIONS)
-
-    globals()['__builtins__']['input'] = SubprocessInput(io_main_to_sub_queue, io_sub_to_main_queue)
-    globals()['__builtins__']['print'] = SubprocessPrint(io_main_to_sub_queue, io_sub_to_main_queue)
-
-    v = input('require input\n')
-    print('printing', float(v))
-
-    v = input('require input\n')
-    print('printing', float(v))
-
-    v = input('require input\n')
-    print('printing', float(v))
-
-
-def main():
-    io_main_to_sub_queue = multiprocessing.Queue()
-    io_sub_to_main_queue = multiprocessing.Queue()
-    p = multiprocessing.Process(target=func, args=(io_main_to_sub_queue, io_sub_to_main_queue))
-    p.start()
-
-    for i in range(30):
-        action = io_sub_to_main_queue.get()
-        print('action: ' + action)
-        if action == 'print':
-            print(io_sub_to_main_queue.get(), end='')
-        if action == 'input':
-            print(io_sub_to_main_queue.get(), end='')
-            #x = input(io_sub_to_main_queue.get())
-            io_main_to_sub_queue.put(i)
-
-    p.join()
-
-
-if __name__ == '__main__':
-    main()
