@@ -44,10 +44,7 @@ export default class Header extends React.Component {
                         </NavDropdown>
                     </Nav>
                     <Nav pullRight>
-                        <NavItem href='#'>
-                            Sign up
-                        </NavItem>
-                        <NavItem href='#'>
+                        <NavItem href={'auth/login/google-oauth2'}>
                             Log in
                         </NavItem>
                     </Nav>
