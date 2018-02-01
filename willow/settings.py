@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
+import json
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -157,9 +158,15 @@ WEBPACK_LOADER = {
 # Social django configuration
 
 AUTHENTICATION_BACKENDS = (
-    'social_core.backends.google.GoogleOAuth',
-    'social_core.backends.google.GoogleOAuth2',
+    'social_core.backends.open_id.OpenIdAuth',
     'social_core.backends.google.GoogleOpenId',
+    'social_core.backends.google.GoogleOAuth2',
 
     'django.contrib.auth.backends.ModelBackend'
 )
+sensitive = json.loads(open(os.path.join(BASE_DIR, 'sensitive.json')).read())
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = sensitive['web']['client_id']
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = sensitive['web']['client_secret']
+LOGIN_URL = ''
+LOGOUT_URL = ''
+LOGIN_REDIRECT_URL = ''

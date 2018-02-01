@@ -1,4 +1,6 @@
 ### Mine
+# sensitive data
+sensitive.json
 # package lock
 package-lock.json
 # webpack
