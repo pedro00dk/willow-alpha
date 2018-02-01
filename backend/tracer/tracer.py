@@ -202,6 +202,13 @@ class _SubprocessTracer:
 ################################
 def main():
     script = '''
+
+from functools import reduce
+try:
+    import sys
+except Exception as e:
+    print(str(e))
+
 class XYZ:
 
     def __init__(self, x, y, z):
@@ -238,7 +245,7 @@ raise 'error'
         return input(prompt)
 
     def print_callback(text):
-        print(text)
+        print(text, end='')
 
     t = CompressedTracer(script, input_callback, print_callback)
     while True:
