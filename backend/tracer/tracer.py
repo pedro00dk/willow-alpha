@@ -60,6 +60,35 @@ class Tracer:
                 pass
 
 
+class CompressedTracer(Tracer):
+
+    def __init__(self, script, input_callback, print_callback):
+        super().__init__(script, input_callback, print_callback)
+        self.saved_info = None
+
+    def next_info(self):
+        if self._ended or not self._tracer_subprocess.is_alive():
+            raise Exception('tracer ended')
+        while True:
+            self._info_main_to_sub_queue.put('next')
+            info = self._info_sub_to_main_queue.get()
+            if info['end']:
+                self._ended = True
+                return info
+            if info['filename'] != '<string>':
+                continue
+            if self.saved_info is None:
+                self.saved_info = info
+            else:
+                if info['line'] == self.saved_info['line']:
+                    self.saved_info = info
+                else:
+                    final_info = self.saved_info
+                    self.saved_info = info
+                    return final_info
+        return info
+    
+
 # everything below run in other process
 
 def _start_tracer_subprocess(script, info_main_to_sub_queue, info_sub_to_main_queue,
@@ -173,14 +202,6 @@ class _SubprocessTracer:
 ################################
 def main():
     script = '''
-
-try:
-    import sys
-except Exception as e:
-    print(e)
-
-print(__name__)
-
 class XYZ:
 
     def __init__(self, x, y, z):
@@ -194,17 +215,10 @@ class XYZ:
     def __str__(self):
         return f'{type(self).__name__}({self.x}, {self.y}, {self.z})'
 
-
-print(XYZ)
-print('dir')
-print(dir())
-print()
-print('vars')
-print(vars())
-
 x = 10
 y = 10
 z = 10
+
 x = int(input('x value: '))
 print(f'x: {x}')
 y = int(input('y value: '))
@@ -226,10 +240,11 @@ raise 'error'
     def print_callback(text):
         print(text)
 
-    t = Tracer(script, input_callback, print_callback)
+    t = CompressedTracer(script, input_callback, print_callback)
     while True:
         try:
-            t.next_info()
+            info = t.next_info()
+            print(info['text'])
         except Exception:
             break
 
