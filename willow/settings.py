@@ -169,4 +169,4 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = sensitive['web']['client_id']
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = sensitive['web']['client_secret']
 LOGIN_URL = ''
 LOGOUT_URL = ''
-LOGIN_REDIRECT_URL = ''
+LOGIN_REDIRECT_URL = '/'
