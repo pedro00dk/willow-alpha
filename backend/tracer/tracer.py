@@ -102,8 +102,8 @@ class TracerController:
             )
         )
         self._tracer_subprocess.start()
-        self.end = False
         self._last_event = _EVENT_FRAME
+        self.end = False
 
     def next_event(self):
         if self.end:
@@ -167,7 +167,7 @@ class FilteredTracerController(TracerController):
         while True:
             event_value = super().next_event()
             event = event_value[0]
-            if event == _EVENT_INPUT or event == _EVENT_PRINT:
+            if event == _EVENT_INPUT or event == _EVENT_PRINT or self.end:
                 return event_value
             if event_value[1]['filename'] != _SCRIPT_NAME:
                 continue
@@ -321,7 +321,7 @@ print(f'sqr_mag of {v} is {sm}')
 #        j = input('input')
 #        print(j + ' ' + x)
 
-for i in range(10000000000):
+for i in range(10000):
     if i % 10 == 0:
         pass
         print(([i] * i))
@@ -335,12 +335,13 @@ raise 'error'
 
 
 def main():
-    t = TracerController(script)
+    t = FilteredTracerController(script)
     print_count = 0
     while True:
         if print_count == 10:
-            t.stop()
-            break
+            #t.stop()
+            #break
+            pass
         try:
             event_value = t.next_event()
             event = event_value[0]
