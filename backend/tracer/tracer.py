@@ -182,13 +182,19 @@ class FilteredTracerController(TracerController):
                     return result_event
 
 
-def _start_tracer_process(script, main_to_sub_queue, sub_to_main_queue, io_main_to_sub_queue, io_sub_to_main_queue):
-    _TracerProcess(script, main_to_sub_queue, sub_to_main_queue, io_main_to_sub_queue, io_sub_to_main_queue)
+def _start_tracer_process(script, main_to_sub_queue, sub_to_main_queue,
+                          io_main_to_sub_queue, io_sub_to_main_queue):
+    _TracerProcess(
+        script,
+        main_to_sub_queue, sub_to_main_queue,
+        io_main_to_sub_queue, io_sub_to_main_queue
+    )
 
 
 class _TracerProcess:
 
-    def __init__(self, script, main_to_sub_queue, sub_to_main_queue, io_main_to_sub_queue, io_sub_to_main_queue):
+    def __init__(self, script, main_to_sub_queue, sub_to_main_queue,
+                 io_main_to_sub_queue, io_sub_to_main_queue):
         self.script = script
         self.script_lines = script.splitlines()
         self.main_to_sub_queue = main_to_sub_queue
@@ -207,8 +213,12 @@ class _TracerProcess:
             '__loader__': None, '__spec__': None, '__cached__': None,
             '__builtins__': globals()['__builtins__'].copy()
         }
-        script_globals['__builtins__']['input'] = _Input(self.io_main_to_sub_queue, self.io_sub_to_main_queue)
-        script_globals['__builtins__']['print'] = _Print(self.io_main_to_sub_queue, self.io_sub_to_main_queue)
+        script_globals['__builtins__']['input'] = _Input(
+            self.io_main_to_sub_queue, self.io_sub_to_main_queue
+        )
+        script_globals['__builtins__']['print'] = _Print(
+            self.io_main_to_sub_queue, self.io_sub_to_main_queue
+        )
         _disable_modules(_COMMON_DISABLE_MODULES)
         _disable_functions(_COMMON_DISABLE_FUNCTIONS, script_globals)
         sys.settrace(self.trace_dispatch)
