@@ -5,26 +5,34 @@ import { connect } from 'react-redux'
 
 import { fetchExercises } from '../reducers/exercise'
 import { selectExercise } from '../reducers/selectExercise'
+import { fetchUser } from '../reducers/user'
 
 
-@connect(state => ({ exercise: state.exercise }))
+@connect(state => ({ exercise: state.exercise, user: state.user }))
 export default class Header extends React.Component {
 
     componentDidMount() {
-        let { dispatch, exercise } = this.props
+        let { dispatch, exercise, user } = this.props
         if (!exercise.isFetching && exercise.exercises.length === 0 && exercise.err === undefined)
             dispatch(fetchExercises())
+        dispatch(fetchUser())
     }
-
+    
     renderExercises() {
         let { dispatch, exercise } = this.props
-
+        
         if (exercise.isFetching) return <MenuItem>Loading...</MenuItem>
         if (exercise.err !== undefined) return <MenuItem>Error</MenuItem>
         if (exercise.exercises.length === 0) return <MenuItem>Exercises empty</MenuItem>
         return exercise.exercises.map((exercise, i) => {
             return <MenuItem key={i} onClick={() => dispatch(selectExercise(exercise.id))}>{exercise.name}</MenuItem>
         })
+    }
+    
+    renderUser() {
+        let { user } = this.props
+        if (!user.isUserLogged) return <NavItem href={'auth/login/google-oauth2'}>Log in</NavItem>
+        return <NavItem>{user.email}</NavItem>
     }
 
     render() {
@@ -44,9 +52,7 @@ export default class Header extends React.Component {
                         </NavDropdown>
                     </Nav>
                     <Nav pullRight>
-                        <NavItem href={'auth/login/google-oauth2'}>
-                            Log in
-                        </NavItem>
+                        {this.renderUser()}
                     </Nav>
                 </Navbar.Collapse>
             </Navbar>

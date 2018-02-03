@@ -27,7 +27,7 @@ export function fetchExercises() {
     return dispatch => {
         dispatch({ type: FETCH_EXERCISES })
         return fetch(
-            '/Exercise',
+            '/exercises/',
             {
                 headers: {
                     'Content-Type': 'application/json'
