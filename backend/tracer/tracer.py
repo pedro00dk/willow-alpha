@@ -136,6 +136,9 @@ class TracerController:
             self._last_event = event
             return event, value
 
+    def send_input(self, value):
+        self._io_main_to_sub_queue.put(value)
+
     def stop(self):
         if self.end:
             raise Exception('tracer ended')

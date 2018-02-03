@@ -40,6 +40,36 @@ class ExerciseViewset(viewsets.ModelViewSet):
 
 class TracerAPIView(views.APIView):
 
+    permission_classes = (permissions.IsAuthenticated,)
+    user_tracers = {}
+
     def post(self, request, format=None):
-        #compressed_tracer = tracer.CompressedTracer()
-        return response.Response({'result': 'traced data'})
+        script = request.data['script']
+        has_tracer = request.user.id in TracerAPIView.user_tracers
+        if has_tracer:
+            try:
+                TracerAPIView.user_tracers[request.user.id].stop()
+            except Exception as e:
+                pass
+        TracerAPIView.user_tracers[request.user.id] = tracer.FilteredTracerController(script)
+        return response.Response({'detail': 'tracer started'})
+
+
+class TracerNextEventAPIView(views.APIView):
+
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request, format=None):
+        if request.user.id not in TracerAPIView.user_tracers:
+            return response.Response({'detail': 'tracer not initialized'})
+        user_tracer = TracerAPIView.user_tracers[request.user.id]
+        if 'input' in request.data:
+            user_tracer.send_input(input_data)
+        try:
+            event, value = user_tracer.next_event()
+        except Exception as e:
+            return response.Response({'detail': 'tracer ended'})
+        return response.Response({'trace_event': event, 'value': value})
+
+
+

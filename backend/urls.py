@@ -15,8 +15,9 @@ urlpatterns = [
 
     path('', include(viewsets_routes.urls)),
 
-    re_path(r'^current_user', views.CurrentUserAPIView.as_view()),
-    re_path(r'^tracer', views.TracerAPIView.as_view()),
+    re_path(r'^current_user/', views.CurrentUserAPIView.as_view()),
+    re_path(r'^tracer/', views.TracerAPIView.as_view()),
+    re_path(r'^tracer_next_event/', views.TracerNextEventAPIView.as_view()),
 
     #re_path(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     re_path(r'^auth/', include('social_django.urls', namespace='social'))
