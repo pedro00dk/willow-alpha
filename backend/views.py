@@ -1,7 +1,7 @@
 from django.contrib.auth import logout
 from django.contrib.auth.models import Group, User
 from django.db.models import Model
-from rest_framework import permissions, response, views, viewsets
+from rest_framework import permissions, response, status, views, viewsets
 from rest_framework.parsers import JSONParser
 
 from backend import models, serializers
@@ -53,7 +53,10 @@ class CurrentUserControllerAPIView(views.APIView):
         elif 'logout' in request.data and request.data['logout']:
             logout(request)
             return response.Response({'detail': 'logout successful'})
-        return response.Response({'detail': 'option not provided or supported'})
+        return response.Response(
+            {'detail': 'option not provided or supported'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class TracerAPIView(views.APIView):
@@ -79,7 +82,10 @@ class TracerNextEventAPIView(views.APIView):
 
     def post(self, request, format=None):
         if request.user.id not in TracerAPIView.user_tracers:
-            return response.Response({'detail': 'tracer not initialized'})
+            return response.Response(
+                {'detail': 'tracer not initialized'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         user_tracer = TracerAPIView.user_tracers[request.user.id]
         if 'stop' in request.data and request.data['stop'] == True:
             user_tracer.stop()
