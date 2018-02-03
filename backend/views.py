@@ -63,11 +63,16 @@ class TracerNextEventAPIView(views.APIView):
         if request.user.id not in TracerAPIView.user_tracers:
             return response.Response({'detail': 'tracer not initialized'})
         user_tracer = TracerAPIView.user_tracers[request.user.id]
+        if 'stop' in request.data and request.data['stop'] == True:
+            user_tracer.stop()
+            TracerAPIView.user_tracers.pop(request.user.id)
+            return response.Response({'detail': 'tracer ended'})
         if 'input' in request.data:
             user_tracer.send_input(input_data)
         try:
             event, value = user_tracer.next_event()
         except Exception as e:
+            TracerAPIView.user_tracers.pop(request.user.id)
             return response.Response({'detail': 'tracer ended'})
         return response.Response({'trace_event': event, 'value': value})
 
