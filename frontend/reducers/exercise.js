@@ -1,3 +1,5 @@
+import Cookies from 'js-cookie'
+
 const initialState = {
     isFetching: false,
     exercises: []
@@ -30,8 +32,10 @@ export function fetchExercises() {
             '/exercises/',
             {
                 headers: {
+                    'X-CSRFToken': Cookies.get('csrftoken'),
+                    'Accept': 'application/json',
                     'Content-Type': 'application/json'
-                }
+                },
             }
         ).then(
             res => res.json().then(json => dispatch({ type: FETCH_EXERCISES_SUCCESS, json: json })),
