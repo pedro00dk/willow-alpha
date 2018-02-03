@@ -27,6 +27,7 @@ export default class Editor extends React.Component {
             readonly: this.props.readonly !== undefined ? this.props.readonly : false
         }
         this.value = this.props.value !== undefined ? this.props.value : ''
+        this.onValueChangeCallback = this.props.onValueChangeCallback
 
         // binds
         this.onValueChange = this.onValueChange.bind(this)
@@ -34,6 +35,8 @@ export default class Editor extends React.Component {
 
     onValueChange(value) {
         this.value = value
+        if (this.onValueChangeCallback !== undefined)
+            this.onValueChangeCallback(value)
     }
 
     render() {
