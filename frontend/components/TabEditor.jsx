@@ -5,11 +5,21 @@ import { connect } from 'react-redux'
 
 import Editor from './Editor'
 
+import { updateScript } from '../reducers/script'
+
 @connect(state => ({ exercise: state.exercise, selectExercise: state.selectExercise }))
 export default class TabEditor extends React.Component {
+    
+    constructor(props) {
+        super(props)
+
+        // binds
+        this.onScriptChangeCallback = this.onScriptChangeCallback.bind(this)
+    }
 
     onScriptChangeCallback(value) {
-        console.log(value)
+        let { dispatch } = this.props
+        dispatch(updateScript(value))
     }
 
     renderExerciseTabs() {
@@ -21,20 +31,10 @@ export default class TabEditor extends React.Component {
         console.log(selectedExerciseData)
         return [
             <Tab eventKey={1} title='README'>
-                <Editor
-                    mode='text'
-                    theme='xcode'
-                    font={14}
-                    value={selectedExerciseData.readme}
-                    readonly />
+                <Editor mode='text' theme='xcode' font={14} value={selectedExerciseData.readme} readonly />
             </Tab>,
             <Tab eventKey={2} title='Input Example'>
-                <Editor
-                    mode='text'
-                    theme='xcode'
-                    font={14}
-                    value={selectedExerciseData.input_ex}
-                    readonly />
+                <Editor mode='text' theme='xcode' font={14} value={selectedExerciseData.input_ex} readonly />
             </Tab>
         ]
     }
@@ -46,11 +46,7 @@ export default class TabEditor extends React.Component {
                     <Col>
                         <Tabs animation={false} id={'uncontrolled-tab-example'}>
                             <Tab eventKey={0} title='Script'>
-                                <Editor
-                                    mode='python'
-                                    theme='xcode'
-                                    font={14}
-                                    onValueChangeCallback={this.onScriptChangeCallback} />
+                                <Editor mode='python' theme='xcode' font={14} onValueChangeCallback={this.onScriptChangeCallback} />
                             </Tab>
                             {this.renderExerciseTabs()}
                         </Tabs>
