@@ -1,3 +1,5 @@
+import Cookies from 'js-cookie'
+
 const initialState = {
     isFetching: false,
     isUserLogged: false,
@@ -22,6 +24,10 @@ export default function reduce(state = initialState, action = {}) {
             }
         case FETCH_USER_ERROR:
             return { ...state, isFetching: false, isUserLogged: false }
+        case LOGOUT_USER:
+        case LOGOUT_USER_SUCCESS:
+        case LOGOUT_USER_ERROR:
+            return { ...state, isFetching: false, isUserLogged: false }
         default:
             return state
     }
@@ -31,28 +37,58 @@ export default function reduce(state = initialState, action = {}) {
 const FETCH_USER = 'FETCH_USER'
 const FETCH_USER_SUCCESS = 'FETCH_USER_SUCCESS'
 const FETCH_USER_ERROR = 'FETCH_USER_ERROR'
+const LOGOUT_USER = 'LOGOUT_USER'
+const LOGOUT_USER_SUCCESS = 'LOGOUT_USER_SUCCESS'
+const LOGOUT_USER_ERROR = 'LOGOUT_USER_ERROR'
 
 // action creators
 export function fetchUser() {
     return dispatch => {
         dispatch({ type: FETCH_USER })
         return fetch(
-            '/current_user/',
+            '/user/',
             {
+                method: 'post',
+                credentials: 'same-origin',
                 headers: {
+                    'X-CSRFToken': Cookies.get('csrftoken'),
+                    'Accept': 'application/json',
                     'Content-Type': 'application/json'
-                }
+                },
+                body: JSON.stringify({ info: true })
             }
         ).then(
-            res => res.json().then(json => {
-                console.log('im hereeee')
-                if (json.detail !== undefined) {
-                    console.log('im hereeee  2')
-                    console.log(json)
-                    dispatch({ type: FETCH_USER_ERROR, json: json })
-                }
-                else dispatch({ type: FETCH_USER_SUCCESS, json: json })
-            }),
-            err => dispatch({ type: FETCH_USER_ERROR, err: err }))
+            res => {
+                if (res.status === 200)
+                    res.json().then(json => dispatch({ type: FETCH_USER_SUCCESS, json: json }))
+                else dispatch({ type: FETCH_USER_ERROR })
+            },
+            err => dispatch({ type: FETCH_USER_ERROR }))
+    }
+}
+
+export function logoutUser() {
+    return dispatch => {
+        dispatch({ type: LOGOUT_USER })
+        return fetch(
+            '/user/',
+            {
+                method: 'post',
+                credentials: 'same-origin',
+                headers: {
+                    'X-CSRFToken': Cookies.get('csrftoken'),
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ logout: true })
+            }
+        ).then(
+            res => {
+                console.log(res.status)
+                if (res.status === 200)
+                    res.json().then(json => dispatch({ type: LOGOUT_USER_SUCCESS, json: json }))
+                else dispatch({ type: LOGOUT_USER_ERROR })
+            },
+            err => dispatch({ type: LOGOUT_USER_ERROR }))
     }
 }

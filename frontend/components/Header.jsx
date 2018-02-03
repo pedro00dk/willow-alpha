@@ -5,7 +5,7 @@ import { connect } from 'react-redux'
 
 import { fetchExercises } from '../reducers/exercise'
 import { selectExercise } from '../reducers/selectExercise'
-import { fetchUser } from '../reducers/user'
+import { fetchUser, logoutUser } from '../reducers/user'
 
 
 @connect(state => ({ exercise: state.exercise, user: state.user }))
@@ -15,24 +15,31 @@ export default class Header extends React.Component {
         let { dispatch, exercise, user } = this.props
         if (!exercise.isFetching && exercise.exercises.length === 0 && exercise.err === undefined)
             dispatch(fetchExercises())
-        dispatch(fetchUser())
+        if (!user.isFetching) dispatch(fetchUser())
     }
-    
+
     renderExercises() {
         let { dispatch, exercise } = this.props
-        
-        if (exercise.isFetching) return <MenuItem>Loading...</MenuItem>
-        if (exercise.err !== undefined) return <MenuItem>Error</MenuItem>
-        if (exercise.exercises.length === 0) return <MenuItem>Exercises empty</MenuItem>
+        if (exercise.isFetching) return (<MenuItem>Loading...</MenuItem>)
+        if (exercise.err !== undefined) return (<MenuItem>Error</MenuItem>)
+        if (exercise.exercises.length === 0) return (<MenuItem>Exercises empty</MenuItem>)
         return exercise.exercises.map((exercise, i) => {
-            return <MenuItem key={i} onClick={() => dispatch(selectExercise(exercise.id))}>{exercise.name}</MenuItem>
+            return (
+                <MenuItem onClick={() => dispatch(selectExercise(exercise.id))}>
+                    {exercise.name}
+                </MenuItem>
+            )
         })
     }
-    
-    renderUser() {
-        let { user } = this.props
-        if (!user.isUserLogged) return <NavItem href={'auth/login/google-oauth2'}>Log in</NavItem>
-        return <NavItem>{user.email}</NavItem>
+
+    renderLoginUser() {
+        let { dispatch, user } = this.props
+        if (user.isFetching) return (<NavItem>Loading</NavItem>)
+        if (!user.isUserLogged) return (<NavItem href={'auth/login/google-oauth2'}>Log in</NavItem>)
+        return [
+            <NavItem>{user.email}</NavItem>,
+            <NavItem onClick={()=> dispatch(logoutUser())}>logout</NavItem>
+        ]
     }
 
     render() {
@@ -47,12 +54,12 @@ export default class Header extends React.Component {
                 </Navbar.Header>
                 <Navbar.Collapse>
                     <Nav>
-                        <NavDropdown id={'header-dropdown-exercises'} title={'Exercises'}>
+                        <NavDropdown title={'Exercises'}>
                             {this.renderExercises()}
                         </NavDropdown>
                     </Nav>
                     <Nav pullRight>
-                        {this.renderUser()}
+                        {this.renderLoginUser()}
                     </Nav>
                 </Navbar.Collapse>
             </Navbar>
