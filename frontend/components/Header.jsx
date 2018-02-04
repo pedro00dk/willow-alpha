@@ -21,8 +21,8 @@ export default class Header extends React.Component {
     renderExercises() {
         let { dispatch, exercise } = this.props
         if (exercise.isFetching) return (<MenuItem>Loading...</MenuItem>)
-        if (exercise.err !== undefined) return (<MenuItem>Error</MenuItem>)
-        if (exercise.exercises.length === 0) return (<MenuItem>Exercises empty</MenuItem>)
+        if (exercise.exercises === null) return (<MenuItem>Failed to load exercises</MenuItem>)
+        if (exercise.exercises.length === 0) return (<MenuItem>No exercises registered</MenuItem>)
         return exercise.exercises.map((exercise, i) => {
             return (
                 <MenuItem onClick={() => dispatch(selectExercise(exercise.id))}>
@@ -35,10 +35,10 @@ export default class Header extends React.Component {
     renderLoginUser() {
         let { dispatch, user } = this.props
         if (user.isFetching) return (<NavItem>Loading</NavItem>)
-        if (!user.isUserLogged) return (<NavItem href={'auth/login/google-oauth2'}>Log in</NavItem>)
+        if (user.id === null) return (<NavItem href={'auth/login/google-oauth2'}>Log in</NavItem>)
         return [
             <NavItem>{user.email}</NavItem>,
-            <NavItem onClick={()=> dispatch(logoutUser())}>logout</NavItem>
+            <NavItem onClick={() => dispatch(logoutUser())}>logout</NavItem>
         ]
     }
 

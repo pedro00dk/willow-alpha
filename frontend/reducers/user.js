@@ -1,8 +1,7 @@
-import Cookies from 'js-cookie'
+import { execute_fetch } from './util/util'
 
 const initialState = {
     isFetching: false,
-    isUserLogged: false,
     id: null,
     username: null,
     email: null
@@ -17,17 +16,16 @@ export default function reduce(state = initialState, action = {}) {
             return {
                 ...state,
                 isFetching: false,
-                isUserLogged: true,
                 id: action.json.id,
                 username: action.json.username,
                 email: action.json.email
             }
-        case FETCH_USER_ERROR:
-            return { ...state, isFetching: false, isUserLogged: false }
         case LOGOUT_USER:
+            return { ...state, isFetching: true }
+        case FETCH_USER_ERROR:
         case LOGOUT_USER_SUCCESS:
         case LOGOUT_USER_ERROR:
-            return { ...state, isFetching: false, isUserLogged: false }
+            return { ...state, isFetching: false, id: null, username: null, email: null }
         default:
             return state
     }
@@ -45,49 +43,27 @@ const LOGOUT_USER_ERROR = 'LOGOUT_USER_ERROR'
 export function fetchUser() {
     return dispatch => {
         dispatch({ type: FETCH_USER })
-        return fetch(
-            '/user/',
-            {
-                method: 'post',
-                credentials: 'same-origin',
-                headers: {
-                    'X-CSRFToken': Cookies.get('csrftoken'),
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ info: true })
-            }
-        ).then(
+        return execute_fetch('/user/', true, 'post', { info: true },
             res => {
                 if (res.status === 200)
                     res.json().then(json => dispatch({ type: FETCH_USER_SUCCESS, json: json }))
                 else dispatch({ type: FETCH_USER_ERROR })
             },
-            err => dispatch({ type: FETCH_USER_ERROR }))
+            err => dispatch({ type: FETCH_USER_ERROR })
+        )
     }
 }
 
 export function logoutUser() {
     return dispatch => {
         dispatch({ type: LOGOUT_USER })
-        return fetch(
-            '/user/',
-            {
-                method: 'post',
-                credentials: 'same-origin',
-                headers: {
-                    'X-CSRFToken': Cookies.get('csrftoken'),
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ logout: true })
-            }
-        ).then(
+        return execute_fetch('/user/', true, 'post', { logout: true },
             res => {
                 if (res.status === 200)
                     res.json().then(json => dispatch({ type: LOGOUT_USER_SUCCESS, json: json }))
                 else dispatch({ type: LOGOUT_USER_ERROR })
             },
-            err => dispatch({ type: LOGOUT_USER_ERROR }))
+            err => dispatch({ type: LOGOUT_USER_ERROR })
+        )
     }
 }
