@@ -28,7 +28,6 @@ export default class TabEditor extends React.Component {
 
         let selectedExerciseData = exercise.exercises
             .find(e => e.id === selectExercise.selectedExercise)
-        console.log(selectedExerciseData)
         return [
             <Tab eventKey={1} title='README'>
                 <Editor mode='text' theme='xcode' font={14} value={selectedExerciseData.readme} readonly />

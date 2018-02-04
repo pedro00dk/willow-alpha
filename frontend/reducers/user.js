@@ -84,7 +84,6 @@ export function logoutUser() {
             }
         ).then(
             res => {
-                console.log(res.status)
                 if (res.status === 200)
                     res.json().then(json => dispatch({ type: LOGOUT_USER_SUCCESS, json: json }))
                 else dispatch({ type: LOGOUT_USER_ERROR })
