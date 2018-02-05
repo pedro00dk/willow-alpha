@@ -102,13 +102,13 @@ class TracerController:
             )
         )
         self._tracer_subprocess.start()
-        self._last_event = _EVENT_FRAME
-        self.end = False
+        self._previous_event = _EVENT_FRAME
+        self._tracer_ended = False
 
     def next_event(self):
-        if self.end:
+        if self._tracer_ended:
             raise Exception('tracer ended')
-        if self._last_event == _EVENT_FRAME:
+        if self._previous_event == _EVENT_FRAME:
             self._main_to_sub_queue.put(_ACTION_NEXT)
             while True:
                 try:
@@ -121,36 +121,32 @@ class TracerController:
                     break
                 except queue.Empty:
                     pass
-            self._last_event = event
+            self._previous_event = event
             if event == _EVENT_FRAME:
-                self.end = value['end']
-                if self.end:
+                self._tracer_ended = value['end']
+                if self._tracer_ended:
                     self._tracer_subprocess.join()
-                return event, value
-            elif event == _EVENT_INPUT:
-                return event, value, lambda i: self._io_main_to_sub_queue.put(i)
-            elif event == _EVENT_PRINT:
-                return event, value
-        elif self._last_event == _EVENT_INPUT or self._last_event == _EVENT_PRINT:
+        elif self._previous_event == _EVENT_INPUT or self._previous_event == _EVENT_PRINT:
             event, value = self._sub_to_main_queue.get()
-            self._last_event = event
-            return event, value
+            self._previous_event = event
+        return event, value
 
     def send_input(self, value):
+        if self._tracer_ended:
+            raise Exception('tracer ended')
         self._io_main_to_sub_queue.put(value)
 
     def stop(self):
-        if self.end:
+        if self._tracer_ended:
             raise Exception('tracer ended')
-        quit = None
-        if self._last_event == _EVENT_FRAME:
+        if self._previous_event == _EVENT_FRAME:
             self._main_to_sub_queue.put(_ACTION_QUIT)
-            quit = self._sub_to_main_queue.get()[0] == _EVENT_QUIT
-        elif self._last_event == _EVENT_INPUT or self._last_event == _EVENT_PRINT:
+            event, value = self._sub_to_main_queue.get()
+        elif self._previous_event == _EVENT_INPUT or self._previous_event == _EVENT_PRINT:
             event, value = self._sub_to_main_queue.get()
             self._main_to_sub_queue.put(_ACTION_QUIT)
-            quit = self._sub_to_main_queue.get()[0] == _EVENT_QUIT
-        self.end = True
+            event, value = self._sub_to_main_queue.get()[0] == _EVENT_QUIT
+        self._tracer_ended = True
         self._main_to_sub_queue.close()
         self._sub_to_main_queue.close()
         self._io_main_to_sub_queue.close()
@@ -164,25 +160,61 @@ class FilteredTracerController(TracerController):
 
     def __init__(self, script):
         super().__init__(script)
-        self.saved_event = None
+        self._saved_event_value = None
 
     def next_event(self):
         while True:
-            event_value = super().next_event()
-            event = event_value[0]
-            if event == _EVENT_INPUT or event == _EVENT_PRINT or self.end:
-                return event_value
-            if event_value[1]['filename'] != _SCRIPT_NAME:
+            event, value = super().next_event()
+            if self._tracer_ended or event == _EVENT_INPUT or event == _EVENT_PRINT:
+                return event, value
+            if value['filename'] != _SCRIPT_NAME:
                 continue
-            if self.saved_event is None:
-                self.saved_event = event_value
+            if self._saved_event_value is None:
+                self._saved_event_value = event, value
+                continue
+            if value['line'] == self._saved_event_value[1]['line']:
+                self._saved_event_value = event, value
             else:
-                if event_value[1]['line'] == self.saved_event[1]['line']:
-                    self.saved_event = event_value
-                else:
-                    result_event = self.saved_event
-                    self.saved_event = event_value
-                    return result_event
+                result_event_value = self._saved_event_value
+                self._saved_event_value = event, value
+                return result_event_value
+
+
+class StepTracerController(FilteredTracerController):
+
+    def __init__(self, script):
+        super().__init__(script)
+        self._filtered_saved_event_value = None
+
+    def step_into(self):
+        self._filtered_saved_event_value = super().next_event()
+        return [self._filtered_saved_event_value]
+
+    def step_over(self):
+        current_depth = self._filtered_saved_event_value[1]['depth'] \
+            if self._filtered_saved_event_value is not None else 1
+        events = []
+        while True:
+            event, value = super().next_event()
+            events.append((event, value))
+            if event == _EVENT_FRAME:
+                self._filtered_saved_event_value = event, value
+            if self._tracer_ended or event == _EVENT_INPUT or \
+                (event == _EVENT_FRAME and value['depth'] <= current_depth):
+                return events
+
+    def step_out(self):
+        current_depth = self._filtered_saved_event_value[1]['depth'] \
+            if self._filtered_saved_event_value is not None else 1
+        events = []
+        while True:
+            event, value = super().next_event()
+            events.append((event, value))
+            if event == _EVENT_FRAME:
+                self._filtered_saved_event_value = event, value
+            if self._tracer_ended or event == _EVENT_INPUT or \
+                (event == _EVENT_FRAME and value['depth'] < current_depth):
+                return events
 
 
 def _start_tracer_process(script, main_to_sub_queue, sub_to_main_queue,
@@ -342,8 +374,8 @@ def main():
     print_count = 0
     while True:
         if print_count == 10:
-            #t.stop()
-            #break
+            # t.stop()
+            # break
             pass
         try:
             event_value = t.next_event()
