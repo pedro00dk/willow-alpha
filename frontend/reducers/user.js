@@ -43,7 +43,7 @@ const LOGOUT_USER_ERROR = 'LOGOUT_USER_ERROR'
 export function fetchUser() {
     return dispatch => {
         dispatch({ type: FETCH_USER })
-        return execute_fetch('/user/', true, 'post', { info: true },
+        return execute_fetch('/user/', true, 'post', { option: 'info' },
             res => {
                 if (res.status === 200)
                     res.json().then(json => dispatch({ type: FETCH_USER_SUCCESS, json: json }))
@@ -57,7 +57,7 @@ export function fetchUser() {
 export function logoutUser() {
     return dispatch => {
         dispatch({ type: LOGOUT_USER })
-        return execute_fetch('/user/', true, 'post', { logout: true },
+        return execute_fetch('/user/', true, 'post', { option: 'logout' },
             res => {
                 if (res.status === 200)
                     res.json().then(json => dispatch({ type: LOGOUT_USER_SUCCESS, json: json }))
