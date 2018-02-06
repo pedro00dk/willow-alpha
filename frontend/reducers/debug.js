@@ -10,10 +10,6 @@ const initialState = {
 
 // reducer
 export default function reduce(state = initialState, action = {}) {
-    console.log('state:')
-    console.log(state)
-    console.log('action:')
-    console.log(action)
     switch (action.type) {
         case START_DEBUG:
             return { ...state, isFetching: true, isDebugging: true, events: [], eventIndex: 0 }
@@ -63,83 +59,71 @@ const DEBUG_ACTION_FAIL = 'DEBUG_ACTION_FAIL'
 export function startDebug(script) {
     return dispatch => {
         dispatch({ type: START_DEBUG })
-        return execute_fetch('/tracer/', true, 'post', { option: 'start', script: script },
-            res => {
-                if (res.status === 200)
-                    res.json().then(json => dispatch({ type: DEBUG_ACTION_SUCCESS }))
-                else dispatch({ type: DEBUG_ACTION_FAIL })
-            },
-            err => dispatch({ type: DEBUG_ACTION_FAIL })
-        )
+        return execute_fetch({
+            url: '/tracer/', method: 'post', body: { option: 'start', script: script },
+            on2XX: json => dispatch({ type: DEBUG_ACTION_SUCCESS, json: json }),
+            onNot2XX: json => dispatch({ type: DEBUG_ACTION_FAIL, json: json }),
+            onErr: err => dispatch({ type: DEBUG_ACTION_FAIL })
+        })
     }
 }
 
 export function stopDebug() {
     return dispatch => {
         dispatch({ type: DEBUG_STEP_OUT })
-        return execute_fetch('/tracer/', true, 'post', { option: 'stop' },
-            res => {
-                if (res.status === 200)
-                    res.json().then(json => dispatch({ type: DEBUG_ACTION_SUCCESS, stop: true }))
-                else dispatch({ type: DEBUG_ACTION_FAIL })
-            },
-            err => dispatch({ type: DEBUG_ACTION_FAIL })
-        )
+        return execute_fetch({
+            url: '/tracer/', method: 'post', body: { option: 'stop' },
+            on2XX: json => dispatch({ type: DEBUG_ACTION_SUCCESS, json: json, stop: true }),
+            onNot2XX: json => dispatch({ type: DEBUG_ACTION_FAIL, json: json }),
+            onErr: err => dispatch({ type: DEBUG_ACTION_FAIL })
+        })
     }
 }
 
 export function sendInput(input) {
     return dispatch => {
         dispatch({ type: DEBUG_STEP_OUT })
-        return execute_fetch('/tracer/', true, 'post', { option: 'input', input: input },
-            res => {
-                if (res.status === 200)
-                    res.json().then(json => dispatch({ type: DEBUG_ACTION_SUCCESS }))
-                else dispatch({ type: DEBUG_ACTION_FAIL })
-            },
-            err => dispatch({ type: DEBUG_ACTION_FAIL })
-        )
+        return execute_fetch({
+            url: '/tracer/', method: 'post', body: { option: 'input', input: input },
+            on2XX: json => dispatch({ type: DEBUG_ACTION_SUCCESS, json: json }),
+            onNot2XX: json => dispatch({ type: DEBUG_ACTION_FAIL, json: json }),
+            onErr: err => dispatch({ type: DEBUG_ACTION_FAIL })
+        })
     }
 }
 
 export function stepInto() {
     return dispatch => {
         dispatch({ type: DEBUG_STEP_INTO })
-        return execute_fetch('/tracer/', true, 'post', { option: 'stepinto' },
-            res => {
-                if (res.status === 200)
-                    res.json().then(json => dispatch({ type: DEBUG_ACTION_SUCCESS, events: json.events }))
-                else dispatch({ type: DEBUG_ACTION_FAIL })
-            },
-            err => dispatch({ type: DEBUG_ACTION_FAIL })
-        )
+        return execute_fetch({
+            url: '/tracer/', method: 'post', body: { option: 'stepinto' },
+            on2XX: json => dispatch({ type: DEBUG_ACTION_SUCCESS, json: json, events: json.events }),
+            onNot2XX: json => dispatch({ type: DEBUG_ACTION_FAIL, json: json }),
+            onErr: err => dispatch({ type: DEBUG_ACTION_FAIL })
+        })
     }
 }
 
 export function stepOver() {
     return dispatch => {
-        dispatch({ type: DEBUG_STEP_OVER })
-        return execute_fetch('/tracer/', true, 'post', { option: 'stepover' },
-            res => {
-                if (res.status === 200)
-                    res.json().then(json => dispatch({ type: DEBUG_ACTION_SUCCESS, events: json.events }))
-                else dispatch({ type: DEBUG_ACTION_FAIL })
-            },
-            err => dispatch({ type: DEBUG_ACTION_FAIL })
-        )
+        dispatch({ type: DEBUG_STEP_INTO })
+        return execute_fetch({
+            url: '/tracer/', method: 'post', body: { option: 'stepover' },
+            on2XX: json => dispatch({ type: DEBUG_ACTION_SUCCESS, json: json, events: json.events }),
+            onNot2XX: json => dispatch({ type: DEBUG_ACTION_FAIL, json: json }),
+            onErr: err => dispatch({ type: DEBUG_ACTION_FAIL })
+        })
     }
 }
 
 export function stepOut() {
     return dispatch => {
-        dispatch({ type: DEBUG_STEP_OUT })
-        return execute_fetch('/tracer/', true, 'post', { option: 'stepout' },
-            res => {
-                if (res.status === 200)
-                    res.json().then(json => dispatch({ type: DEBUG_ACTION_SUCCESS, events: json.events }))
-                else dispatch({ type: DEBUG_ACTION_FAIL })
-            },
-            err => dispatch({ type: DEBUG_ACTION_FAIL })
-        )
+        dispatch({ type: DEBUG_STEP_INTO })
+        return execute_fetch({
+            url: '/tracer/', method: 'post', body: { option: 'stepout' },
+            on2XX: json => dispatch({ type: DEBUG_ACTION_SUCCESS, json: json, events: json.events }),
+            onNot2XX: json => dispatch({ type: DEBUG_ACTION_FAIL, json: json }),
+            onErr: err => dispatch({ type: DEBUG_ACTION_FAIL })
+        })
     }
 }
