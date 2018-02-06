@@ -103,11 +103,20 @@ class TracerController:
         )
         self._tracer_subprocess.start()
         self._previous_event = _EVENT_FRAME
+        self._input_count = 0
         self._tracer_ended = False
 
-    def next_event(self):
+    def _require_tracer_running(self):
         if self._tracer_ended:
             raise Exception('tracer ended')
+
+    def _check_required_input(self):
+        if self._previous_event == _EVENT_INPUT and self._input_count == 0:
+            raise Exception('input required')
+
+    def next_event(self):
+        self._require_tracer_running()
+        self._check_required_input()
         if self._previous_event == _EVENT_FRAME:
             self._main_to_sub_queue.put(_ACTION_NEXT)
             while True:
@@ -126,19 +135,22 @@ class TracerController:
                 self._tracer_ended = value['end']
                 if self._tracer_ended:
                     self._tracer_subprocess.join()
-        elif self._previous_event == _EVENT_INPUT or self._previous_event == _EVENT_PRINT:
+        elif self._previous_event == _EVENT_INPUT:
+            self._input_count -= 1
+            event, value = self._sub_to_main_queue.get()
+            self._previous_event = event
+        elif self._previous_event == _EVENT_PRINT:
             event, value = self._sub_to_main_queue.get()
             self._previous_event = event
         return event, value
 
     def send_input(self, value):
-        if self._tracer_ended:
-            raise Exception('tracer ended')
+        self._require_tracer_running()
         self._io_main_to_sub_queue.put(value)
+        self._input_count += 1
 
     def stop(self):
-        if self._tracer_ended:
-            raise Exception('tracer ended')
+        self._require_tracer_running()
         if self._previous_event == _EVENT_FRAME:
             self._main_to_sub_queue.put(_ACTION_QUIT)
             event, value = self._sub_to_main_queue.get()
@@ -158,64 +170,48 @@ class TracerController:
 
 class FilteredTracerController(TracerController):
 
-    def __init__(self, script):
-        super().__init__(script)
-        self._saved_event_value = None
-
     def next_event(self):
         while True:
             event, value = super().next_event()
             if self._tracer_ended or event == _EVENT_INPUT or event == _EVENT_PRINT:
                 return event, value
-            if value['filename'] != _SCRIPT_NAME:
+            if value['filename'] != _SCRIPT_NAME or value['event'] == _FRAME_CALL \
+                    or value['event'] == _FRAME_RETURN:
                 continue
-            if self._saved_event_value is None:
-                self._saved_event_value = event, value
-                continue
-            if value['line'] == self._saved_event_value[1]['line']:
-                self._saved_event_value = event, value
-            else:
-                result_event_value = self._saved_event_value
-                self._saved_event_value = event, value
-                return result_event_value
+            return event, value
 
 
 class StepTracerController(FilteredTracerController):
 
     def __init__(self, script):
         super().__init__(script)
-        self._filtered_saved_event_value = None
+        self.current_depth = 1
 
     def step_into(self):
-        self._filtered_saved_event_value = super().next_event()
-        return [self._filtered_saved_event_value]
+        event, value = super().next_event()
+        if event == _EVENT_FRAME:
+            self.current_depth = value['depth']
+        return [(event, value)]
 
     def step_over(self):
-        current_depth = self._filtered_saved_event_value[1]['depth'] \
-            if self._filtered_saved_event_value is not None else 1
         events = []
         while True:
-            event, value = super().next_event()
+            event, value = self.step_into()[0]
             events.append((event, value))
-            if event == _EVENT_FRAME:
-                self._filtered_saved_event_value = event, value
-            if self._tracer_ended or event == _EVENT_INPUT or \
-                (event == _EVENT_FRAME and value['depth'] <= current_depth):
+            if self._tracer_ended \
+                    or (event == _EVENT_INPUT and self._input_count == 0) \
+                    or (event == _EVENT_FRAME and value['depth'] <= self.current_depth):
                 return events
 
     def step_out(self):
-        current_depth = self._filtered_saved_event_value[1]['depth'] \
-            if self._filtered_saved_event_value is not None else 1
         events = []
         while True:
-            event, value = super().next_event()
+            event, value = self.step_into()[0]
             events.append((event, value))
-            if event == _EVENT_FRAME:
-                self._filtered_saved_event_value = event, value
-            if self._tracer_ended or event == _EVENT_INPUT or \
-                (event == _EVENT_FRAME and value['depth'] < current_depth):
+            if self._tracer_ended \
+                    or (event == _EVENT_INPUT and self._input_count == 0) \
+                    or (event == _EVENT_FRAME and value['depth'] < self.current_depth):
                 return events
-
 
 def _start_tracer_process(script, main_to_sub_queue, sub_to_main_queue,
                           io_main_to_sub_queue, io_sub_to_main_queue):
@@ -289,10 +285,14 @@ class _TracerProcess:
         stack, depth = self.get_stack(frame)
         end = event == _FRAME_RETURN and depth <= 1
         if event == _FRAME_EXCEPTION:
-            args = (args[0], args[1], traceback.format_exception(args[0], args[1], args[2]))
+            args = {
+                'type': args[0],
+                'value': args[1],
+                'traceback': traceback.format_exception(args[0], args[1], args[2])
+            }
         return {
             'event': event,
-            'args': args if filename == _SCRIPT_NAME else [],
+            'args': args if filename == _SCRIPT_NAME else None,
             'filename': filename,
             'line': line,
             'stack': stack,
@@ -322,6 +322,15 @@ class _TracerProcess:
 
 ################################
 script = '''
+def pow(a=10, b=5):
+    return a **b
+
+p = pow(10, 3)
+
+'''
+
+
+'''
 
 from functools import reduce
 try:
@@ -338,7 +347,7 @@ class XYZ:
 
     def sqr_mag(self):
         return x * x + y * y + z * z
-        
+
     def __str__(self):
         return f'{type(self).__name__}({self.x}, {self.y}, {self.z})'
 
@@ -370,32 +379,24 @@ raise 'error'
 
 
 def main():
-    t = FilteredTracerController(script)
-    print_count = 0
+    t = StepTracerController(script)
     while True:
-        if print_count == 10:
-            # t.stop()
-            # break
-            pass
         try:
-            event_value = t.next_event()
-            event = event_value[0]
-            if event == 'frame':
-                if event_value[1]['event'] == 'exception':
-                    print('exception')
-                if event_value[1]['filename'] != _SCRIPT_NAME:
-                    continue
-                pass
-            if event == 'print':
-                print_count += 1
-                print(event_value[1], end='')
-            if event == 'input':
-                event_value[2]('100')
+            events = t.step_out()
+            for event, value in events:
+                if event == _EVENT_FRAME:
+                    print(value['event'][:4], end=' ')
+                    print(value['depth'], end=' ')
+                    print(value['text'])
+                    print(value['stack'])
+                    print()
+                if event == 'print':
+                    print(value, end='')
+                if event == 'input':
+                    t.send_input('some input')
         except Exception as e:
             print(e)
             break
-    print('end')
-    print(t._tracer_subprocess.is_alive())
 
 
 if __name__ == '__main__':
