@@ -196,21 +196,25 @@ class StepTracerController(FilteredTracerController):
     def step_over(self):
         events = []
         while True:
-            event, value = self.step_into()[0]
+            event, value = self.next_event()
             events.append((event, value))
             if self._tracer_ended \
                     or (event == _EVENT_INPUT and self._input_count == 0) \
                     or (event == _EVENT_FRAME and value['depth'] <= self.current_depth):
+                if event == _EVENT_FRAME:
+                    self.current_depth = value['depth']
                 return events
 
     def step_out(self):
         events = []
         while True:
-            event, value = self.step_into()[0]
+            event, value = self.next_event()
             events.append((event, value))
             if self._tracer_ended \
                     or (event == _EVENT_INPUT and self._input_count == 0) \
                     or (event == _EVENT_FRAME and value['depth'] < self.current_depth):
+                if event == _EVENT_FRAME:
+                    self.current_depth = value['depth']
                 return events
 
 def _start_tracer_process(script, main_to_sub_queue, sub_to_main_queue,
@@ -383,6 +387,7 @@ def main():
     while True:
         try:
             events = t.step_out()
+            print('here')
             for event, value in events:
                 if event == _EVENT_FRAME:
                     print(value['event'][:4], end=' ')
