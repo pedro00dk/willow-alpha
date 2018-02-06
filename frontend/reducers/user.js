@@ -43,27 +43,23 @@ const LOGOUT_USER_ERROR = 'LOGOUT_USER_ERROR'
 export function fetchUser() {
     return dispatch => {
         dispatch({ type: FETCH_USER })
-        return execute_fetch('/user/', true, 'post', { option: 'info' },
-            res => {
-                if (res.status === 200)
-                    res.json().then(json => dispatch({ type: FETCH_USER_SUCCESS, json: json }))
-                else dispatch({ type: FETCH_USER_ERROR })
-            },
-            err => dispatch({ type: FETCH_USER_ERROR })
-        )
+        return execute_fetch({
+            url: '/user/', method: 'post', body: { option: 'info' },
+            on2XX: json => dispatch({ type: FETCH_USER_SUCCESS, json: json }),
+            onNot2XX: json => dispatch({ type: FETCH_USER_ERROR, json: json }),
+            onErr: err => dispatch({ type: FETCH_USER_ERROR })
+        })
     }
 }
 
 export function logoutUser() {
     return dispatch => {
         dispatch({ type: LOGOUT_USER })
-        return execute_fetch('/user/', true, 'post', { option: 'logout' },
-            res => {
-                if (res.status === 200)
-                    res.json().then(json => dispatch({ type: LOGOUT_USER_SUCCESS, json: json }))
-                else dispatch({ type: LOGOUT_USER_ERROR })
-            },
-            err => dispatch({ type: LOGOUT_USER_ERROR })
-        )
+        return execute_fetch({
+            url: '/user/', method: 'post', body: { option: 'logout' },
+            on2XX: json => dispatch({ type: LOGOUT_USER_SUCCESS, json: json }),
+            onNot2XX: json => dispatch({ type: LOGOUT_USER_ERROR, json: json }),
+            onErr: err => dispatch({ type: LOGOUT_USER_ERROR })
+        })
     }
 }

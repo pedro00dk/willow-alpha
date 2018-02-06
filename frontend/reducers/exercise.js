@@ -28,13 +28,11 @@ const FETCH_EXERCISES_ERROR = 'FETCH_EXERCISES_ERROR'
 export function fetchExercises() {
     return dispatch => {
         dispatch({ type: FETCH_EXERCISES })
-        return execute_fetch('/exercises/', true, 'get', null,
-            res => {
-                if (res.status === 200)
-                    res.json().then(json => dispatch({ type: FETCH_EXERCISES_SUCCESS, json: json }))
-                else dispatch({ type: FETCH_EXERCISES_ERROR })
-            },
-            err => dispatch({ type: FETCH_EXERCISES_ERROR })
-        )
+        return execute_fetch({
+            url: '/exercises/',
+            on2XX: json => dispatch({ type: FETCH_EXERCISES_SUCCESS, json: json }),
+            onNot2XX: json => dispatch({ type: FETCH_EXERCISES_ERROR, json: json }),
+            onErr: err => dispatch({ type: FETCH_EXERCISES_ERROR })
+        })
     }
 }
