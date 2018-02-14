@@ -2,7 +2,8 @@ import { execute_fetch } from './util/util'
 
 const initialState = {
     isFetching: false,
-    exercises: []
+    exercises: [],
+    selected: null
 }
 
 // reducer
@@ -14,6 +15,8 @@ export default function reduce(state = initialState, action = {}) {
             return { ...state, isFetching: false, exercises: action.json }
         case FETCH_EXERCISES_ERROR:
             return { ...state, isFetching: false, exercises: null }
+        case SELECT_EXERCISE:
+            return { ...state, selected: action.selected }
         default:
             return state
     }
@@ -23,6 +26,7 @@ export default function reduce(state = initialState, action = {}) {
 const FETCH_EXERCISES = 'FETCH_EXERCISES'
 const FETCH_EXERCISES_SUCCESS = 'FETCH_EXERCISES_SUCCESS'
 const FETCH_EXERCISES_ERROR = 'FETCH_EXERCISES_ERROR'
+const SELECT_EXERCISE = 'SELECT_EXERCISE'
 
 // action creators
 export function fetchExercises() {
@@ -35,4 +39,8 @@ export function fetchExercises() {
             onErr: err => dispatch({ type: FETCH_EXERCISES_ERROR })
         })
     }
+}
+
+export function selectExercise(exercise) {
+    return { type: SELECT_EXERCISE, selected: exercise }
 }

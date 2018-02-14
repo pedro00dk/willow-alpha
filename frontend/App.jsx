@@ -4,8 +4,8 @@ import { Provider } from 'react-redux'
 import { createStore, compose, applyMiddleware, combineReducers } from 'redux'
 import thunk from 'redux-thunk'
 
-import * as reducers from './reducers'
-import AppContainer from './containers/AppContainer'
+import * as reducers from './App/reducers'
+import AppContainer from './App/containers/AppContainer'
 
 
 let finalCreateStore = compose(applyMiddleware(thunk), window.devToolsExtension ? window.devToolsExtension() : f => f)
