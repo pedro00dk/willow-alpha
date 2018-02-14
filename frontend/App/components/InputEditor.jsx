@@ -23,7 +23,7 @@ export default class InputEditor extends React.Component {
             ace.session.removeMarker(markerId)
         })
         Array(editor.inputReadLines).fill().forEach((_, line) => {
-            this.ace.session.addMarker(new Range(i, 0, i, Infinity), 'bg-info', '', false)
+            ace.session.addMarker(new Range(i, 0, i, Infinity), 'bg-info', '', false)
         })
     }
 

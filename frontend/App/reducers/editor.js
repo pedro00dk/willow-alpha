@@ -1,5 +1,6 @@
 const initialState = {
     script: '',
+    scriptHighlightedLine: null,
     input: [],
     inputReadLines: 0
 }
