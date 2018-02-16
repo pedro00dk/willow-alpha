@@ -1,85 +1,43 @@
 import React from 'react'
 import { render } from 'react-dom'
-import { Grid, Row, Col, DropdownButton, MenuItem } from 'react-bootstrap'
 
 import brace from 'brace'
 import AceEditor from 'react-ace'
-
-const __modes = ['text', 'python']
-__modes.forEach(mode => require('brace/mode/' + mode))
-const __themes = ['xcode', 'github', 'monokai', 'terminal']
-__themes.forEach(theme => require('brace/theme/' + theme))
-require('brace/ext/searchbox')
+import 'brace/theme/chrome'
+import 'brace/mode/text'
+import 'brace/mode/python'
+import 'brace/ext/searchbox'
 
 
 export default class TextEditor extends React.Component {
 
-    constructor(props) {
-        super(props)
-
-        this.modes = __modes
-        this.themes = __themes
-        this.fonts = [14, 16, 18, 20, 25, 30]
-
-        this.state = {
-            mode: this.props.mode !== undefined ? this.props.mode : this.modes[0],
-            theme: this.props.theme !== undefined ? this.props.theme : this.themes[0],
-            font: this.props.font !== undefined ? this.props.font : this.fonts[0],
-            gutter: this.props.gutter !== undefined ? this.props.gutter : true,
-            readonly: this.props.readonly !== undefined ? this.props.readonly : false
-        }
-        this.value = this.props.value !== undefined ? this.props.value : ''
-        this.onExec = this.props.onExec
-        this.onChange = this.props.onChange
-
-        // binds
-        this.getAce = this.getAce.bind(this)
-    }
-
-    getAce() {
-        return this.refs.aceEditor.editor
-    }
-
     componentDidMount() {
-        this.refs.aceEditor.editor.commands.on(
-            'exec',
-            event => {
-                if (this.onExec instanceof Array)
-                    this.onExec
-                        .filter(onExec => onExec instanceof Function)
-                        .forEach(onExec => onExec(event, this.getAce()))
-                else if (this.onExec instanceof Function)
-                    this.onExec(event, this.getAce())
-            }
-        )
-        this.refs.aceEditor.editor.session.on(
-            'change',
-            change => {
-                if (this.onChange instanceof Array)
-                    this.onChange
-                        .filter(onChange => onChange instanceof Function)
-                        .forEach(onChange => onChange(change, this.getAce()))
-                else if (this.onChange instanceof Function)
-                    this.onChange(change, this.getAce())
-            }
-        )
+        let ace = this.refs.race.editor
+        if (this.props.onCommandExec !== undefined)
+            ace.commands.on('exec', event => this.props.onCommandExec(event, ace))
+        if (this.props.onTextChange !== undefined)
+            ace.session.on('change', change => this.props.onTextChange(change, ace))
+        this.componentDidUpdate()
+    }
+
+    componentDidUpdate() {
+        let ace = this.refs.race.editor
+        let markersToRemove = Object.values(ace.session.getMarkers(false))
+            .filter(marker => marker.id > 2)
+            .forEach(marker => ace.session.removeMarker(marker.id))
+        if (this.props.markers === undefined) return
+        this.props.markers.forEach(marker => ace.session.addMarker(
+            new Range(marker, 0, marker, 1), 'bg-info position-absolute', 'screenLine', false
+        ))
     }
 
     render() {
-        return (
-            <AceEditor ref={'aceEditor'} className={'col-12'} style={{ width: '100%' }}
-                name={'editor'}
-                mode={this.state.mode}
-                theme={this.state.theme}
-                fontSize={this.state.font}
-                showGutter={this.state.gutter}
-                readOnly={this.state.readonly}
-                value={this.value}
-                onChange={value => this.value = value}
-                editorProps={{ $blockScrolling: Infinity }}
-            />
-        )
+        return <AceEditor
+            mode={'text'} theme={'chrome'} fontSize={14} editorProps={{ $blockScrolling: Infinity }}
+            {...this.props}
+            style={{ width: '100%' }} ref={'race'}
+        />
     }
 }
 
-export var Range = brace.acequire('ace/range').Range
+const { Range } = brace.acequire('ace/range')
