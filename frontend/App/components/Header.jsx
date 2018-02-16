@@ -1,6 +1,5 @@
 import React from 'react'
 import { render } from 'react-dom'
-import { Navbar, NavbarBrand, Nav, NavItem, NavDropdown, MenuItem } from 'react-bootstrap'
 import { connect } from 'react-redux'
 
 import { fetchExercises, selectExercise } from '../reducers/exercise'
@@ -10,12 +9,9 @@ import { fetchUser, logoutUser } from '../reducers/user'
 @connect(state => ({ exercise: state.exercise, user: state.user }))
 export default class Header extends React.Component {
 
-    constructor(props) {
-        super(props)
-    }
-
     componentDidMount() {
         let { dispatch, exercise, user } = this.props
+
         if (!exercise.isFetching && exercise.exercises.length === 0 && exercise.err === undefined)
             dispatch(fetchExercises())
         if (!user.isFetching) dispatch(fetchUser())
@@ -23,49 +19,82 @@ export default class Header extends React.Component {
 
     render() {
         let { dispatch } = this.props
-        return (
-            <Navbar fluid collapseOnSelect style={{ marginBottom: '0px' }}>
-                <Navbar.Header>
-                    <Navbar.Brand>
-                        <a onClick={() => dispatch(selectExercise(null))}>Willow</a>
-                    </Navbar.Brand>
-                    <Navbar.Toggle />
-                </Navbar.Header>
-                <Navbar.Collapse>
-                    <Nav>
-                        <NavDropdown title={'Exercises'}>
-                            {this.renderExercises()}
-                        </NavDropdown>
-                    </Nav>
-                    <Nav pullRight>
-                        {this.renderLoginUser()}
-                    </Nav>
-                </Navbar.Collapse>
-            </Navbar>
+
+        return <nav className='navbar navbar-expand-lg navbar-light bg-light'>
+            <a className='navbar-brand' href='#' onClick={() => dispatch(selectExercise(null))}>
+                Willow
+            </a>
+            <button className='navbar-toggler' type='button' data-toggle='collapse'
+                data-target='#headerContent' aria-controls='headerContent' aria-expanded='false'
+                aria-label='Toggle navigation'>
+                <span className='navbar-toggler-icon'></span>
+            </button>
+            <div className='collapse navbar-collapse' id='headerContent'>
+                <ul className='navbar-nav mr-auto'>
+                    <li className='nav-item active dropdown'>
+                        <a className='nav-link dropdown-toggle' href='#' id='navbarDropdown'
+                            role='button' data-toggle='dropdown' aria-haspopup='true'
+                            aria-expanded='false'>
+                            Exercises
+                        </a>
+                        <div className='dropdown-menu' aria-labelledby='navbarDropdown'>
+                            {this.renderExercisesOptions()}
+                        </div>
+                    </li >
+                </ul>
+                <ul className='navbar-nav ml-auto'>
+                    {this.renderUserOptions()}
+                </ul>
+            </div>
+        </nav>
+    }
+
+    renderExercisesOptions() {
+        let { dispatch, exercise } = this.props
+
+        if (exercise.isFetching)
+            return <a className='dropdown-item' href='#'>
+                Loading...
+            </a>
+        if (exercise.exercises === null)
+            return <a className='dropdown-item' href='#'>
+                Failed to load
+            </a>
+        if (exercise.exercises.length === 0)
+            return <a className='dropdown-item' href='#'>
+                No exercises found
+            </a>
+        return exercise.exercises.map(e =>
+            <a className='dropdown-item' href='#' onClick={() => dispatch(selectExercise(e))}>
+                {e.name}
+            </a>
         )
     }
 
-    renderExercises() {
-        let { dispatch, exercise } = this.props
-        if (exercise.isFetching) return (<MenuItem>Loading...</MenuItem>)
-        if (exercise.exercises === null) return (<MenuItem>Failed to load exercises</MenuItem>)
-        if (exercise.exercises.length === 0) return (<MenuItem>No exercises registered</MenuItem>)
-        return exercise.exercises.map((exercise, i) => {
-            return (
-                <MenuItem onClick={() => dispatch(selectExercise(exercise))}>
-                    {exercise.name}
-                </MenuItem>
-            )
-        })
-    }
-
-    renderLoginUser() {
+    renderUserOptions() {
         let { dispatch, user } = this.props
-        if (user.isFetching) return (<NavItem>Loading</NavItem>)
-        if (user.id === null) return (<NavItem href={'auth/login/google-oauth2'}>Log in</NavItem>)
+
+        if (user.isFetching)
+            return <li className='nav-item'>
+                Loading
+            </li>
+        if (user.id === null)
+            return <li className='nav-item active'>
+                <a className='nav-link' href={'auth/login/google-oauth2'}>
+                    Log in
+                </a>
+            </li>
         return [
-            <NavItem>{user.email}</NavItem>,
-            <NavItem onClick={() => dispatch(logoutUser())}>logout</NavItem>
+            <li className='nav-item'>
+                <a className='nav-link'>
+                    {user.email}
+                </a>
+            </li>,
+            <li className='nav-item active'>
+                <a className='nav-link' href='#' onClick={() => dispatch(logoutUser())}>
+                    Log out
+                </a>
+            </li>
         ]
     }
 }
