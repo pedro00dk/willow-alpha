@@ -2,60 +2,54 @@ import React from 'react'
 import { render } from 'react-dom'
 import { connect } from 'react-redux'
 
-import TextEditor, { Range } from './stateless/TextEditor'
+import TextEditor from './stateless/TextEditor'
 
-import { updateInput } from '../reducers/editor'
+import { setInput, setInputText } from '../reducers/input'
 
 
-@connect(state => ({ editor: state.editor }))
+@connect(state => ({ input: state.input }))
 export default class InputEditor extends React.Component {
 
-    constructor(props) {
-        super(props)
-    }
-    
-    componentDidUpdate() {
-        let { editor } = this.props
-        let ace = this.refs.textEditor.getAce()
-        Object.getOwnPropertyNames(ace.session.getMarkers(false)).forEach(markerIdStr => {
-            let markerId = parseInt(markerIdStr)
-            if (markerId < 2) return
-            ace.session.removeMarker(markerId)
-        })
-        Array(editor.inputReadLines).fill().forEach((_, line) => {
-            ace.session.addMarker(new Range(i, 0, i, Infinity), 'bg-info', '', false)
-        })
-    }
-
     render() {
-        return (
-            <TextEditor ref={'textEditor'} {...this.props} mode={'text'} gutter={false}
-                onExec={(event, ace) => {
-                    let { editor } = this.props
+        let { dispatch, input } = this.props
 
-                    let readLines = editor.inputReadLines
-                    let selFrom = ace.selection.getSelectionAnchor()
-                    let selTo = ace.selection.getSelectionLead()
-                    if (event.command.name === 'insertstring' || event.command.name === 'paste' ||
-                        event.command.name === 'backspace' || event.command.name === 'del' ||
-                        event.command.name === 'cut') {
-                        if (selFrom.row < readLines || selTo.row < readLines) {
-                            event.preventDefault()
-                            event.stopPropagation()
-                        } else if (event.command.name === 'backspace'
-                            && selFrom.row === selTo.row && selFrom.column === selTo.column
-                            && selTo.column === 0) {
-                            event.preventDefault()
-                            event.stopPropagation()
-                        }
-                    }
-                }}
-                onChange={(change, ace) => {
-                    let { dispatch } = this.props
+        let onCommandExec = (event, ace) => {
+            let { input } = this.props
 
-                    dispatch(updateInput(ace.session.getLines(0, ace.session.getLength() - 2)))
-                }}
-            />
-        )
+            let readLines = input.readLines
+            let selFrom = ace.selection.getSelectionAnchor()
+            let selTo = ace.selection.getSelectionLead()
+            if (event.command.name === 'insertstring' || event.command.name === 'paste' ||
+                event.command.name === 'backspace' || event.command.name === 'del' ||
+                event.command.name === 'cut') {
+                if (selFrom.row < readLines || selTo.row < readLines) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                } else if (event.command.name === 'backspace'
+                    && selFrom.row === selTo.row && selFrom.column === selTo.column
+                    && selTo.column === 0) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+            }
+        }
+
+        let onTextChange = (change, ace) => {
+            let { dispatch } = this.props
+
+            dispatch(setInput(
+                ace.session.getLines(0, ace.session.getLength() - 2),
+                ace.session.getValue()
+            ))
+        }
+
+        return <TextEditor
+            mode={'text'}
+            showGutter={false}
+            value={input.inputText}
+            markers={Array(input.readLines).fill().map((_, i) => i)}
+            onCommandExec={onCommandExec}
+            onTextChange={onTextChange}
+        />
     }
 }
