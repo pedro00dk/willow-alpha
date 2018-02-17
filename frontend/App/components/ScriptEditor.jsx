@@ -16,7 +16,7 @@ export default class ScriptEditor extends React.Component {
         return <TextEditor
             mode={'python'}
             value={script.script}
-            readonly={!script.editable}
+            readOnly={!script.editable}
             markers={script.markers}
             onTextChange={(change, ace) => dispatch(setScript(ace.session.getValue()))}
         />

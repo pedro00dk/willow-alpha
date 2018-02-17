@@ -7,12 +7,10 @@ import Header from '../components/Header'
 import TextEditor from '../components/stateless/TextEditor'
 import InputEditor from '../components/InputEditor'
 import ScriptEditor from '../components/ScriptEditor'
+import OutputEditor from '../components/OutputEditor'
 
 
 @Radium
-@connect(state => ({
-    exercise: state.exercise
-}))
 export default class AppContainer extends React.Component {
 
     render() {
@@ -22,6 +20,7 @@ export default class AppContainer extends React.Component {
                 <DebugBar/>
                 <ScriptEditor />
                 <InputEditor />
+                <OutputEditor />
             </div>
         )
     }
