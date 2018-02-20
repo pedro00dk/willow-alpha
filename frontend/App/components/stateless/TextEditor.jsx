@@ -33,9 +33,13 @@ export default class TextEditor extends React.Component {
 
     render() {
         return <AceEditor
-            mode={'text'} theme={'chrome'} fontSize={14} editorProps={{ $blockScrolling: Infinity }}
+            mode={'text'}
+            theme={'chrome'}
+            fontSize={14}
+            editorProps={{ $blockScrolling: Infinity }}
+            style={{ width: '100%' }}
             {...this.props}
-            style={{ width: '100%' }} ref={'race'}
+            ref={'race'}
         />
     }
 }

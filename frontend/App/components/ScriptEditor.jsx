@@ -15,6 +15,7 @@ export default class ScriptEditor extends React.Component {
 
         return <TextEditor
             mode={'python'}
+            {...this.props}
             value={script.script}
             readOnly={!script.editable}
             markers={script.markers}

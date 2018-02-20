@@ -16,6 +16,7 @@ export default class OutputEditor extends React.Component {
         return <TextEditor
             mode={'text'}
             showGutter={false}
+            {...this.props}
             value={output.output}
             readOnly={true}
         />

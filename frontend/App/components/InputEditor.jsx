@@ -46,6 +46,7 @@ export default class InputEditor extends React.Component {
         return <TextEditor
             mode={'text'}
             showGutter={false}
+            {...this.props}
             value={input.inputText}
             markers={Array(input.readLines).fill().map((_, i) => i)}
             onCommandExec={onCommandExec}
