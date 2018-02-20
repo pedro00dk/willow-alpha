@@ -1,5 +1,4 @@
 import React from 'react'
-import { render } from 'react-dom'
 import { connect } from 'react-redux'
 
 import { fetchExercises, selectExercise } from '../reducers/exercise'

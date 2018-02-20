@@ -1,10 +1,5 @@
 import React from 'react'
-import { render } from 'react-dom'
 import { connect } from 'react-redux'
-
-import { debugStart, debugStop, stepOver, stepInto, stepOut, send_input } from '../reducers/debug'
-import { setReadLines } from '../reducers/input'
-import { setScriptMarkers } from '../reducers/script'
 
 import playBtn from './debugBar/playBtn.png'
 import stepOverBtn from './debugBar/stepOverBtn.png'
@@ -13,13 +8,18 @@ import stepOutBtn from './debugBar/stepOutBtn.png'
 import restartBtn from './debugBar/restartBtn.png'
 import stopBtn from './debugBar/stopBtn.png'
 
+import { debugStart, debugStop, stepOver, stepInto, stepOut, send_input } from '../reducers/debug'
+import { setReadLines } from '../reducers/input'
+import { setScriptMarkers } from '../reducers/script'
+
 
 @connect(state => ({
     debug: state.debug,
     user: state.user,
     exercise: state.exercise,
     script: state.script,
-    input: state.input
+    input: state.input,
+    output: state.output
 }))
 export default class DebugBar extends React.Component {
 
@@ -36,7 +36,7 @@ export default class DebugBar extends React.Component {
 
     play() {
         let { dispatch, debug, script } = this.props
- 
+
         if (!debug.isDebugging) dispatch(debugStart(script.script))
         else dispatch(debugStart(script.script)) // # continue
     }
@@ -55,7 +55,7 @@ export default class DebugBar extends React.Component {
 
     stepInto() {
         let { dispatch, debug } = this.props
-   
+
         // check if input needed
         if (debug.events.length !== 0 && debug.events[debug.events.length - 1][0] === 'input'
             && input.input.length > input.readLines) {
@@ -76,10 +76,10 @@ export default class DebugBar extends React.Component {
         }
         dispatch(stepOut())
     }
-    
+
     stop() {
         let { dispatch, debug } = this.props
-        
+
         dispatch(setReadLines(0))
         dispatch(debugStop(script.script))
     }

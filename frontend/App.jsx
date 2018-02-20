@@ -4,24 +4,24 @@ import { Provider } from 'react-redux'
 import { createStore, compose, applyMiddleware, combineReducers } from 'redux'
 import thunk from 'redux-thunk'
 
-import * as reducers from './App/reducers'
 import AppContainer from './App/containers/AppContainer'
 
+import * as reducers from './App/reducers'
 
-let finalCreateStore = compose(applyMiddleware(thunk), window.devToolsExtension ? window.devToolsExtension() : f => f)
-    (createStore)
-let reducer = combineReducers(reducers)
-let store = finalCreateStore(reducer)
+
+let finalCreateStore = compose(
+    applyMiddleware(thunk),
+    window.devToolsExtension ? window.devToolsExtension() : f => f
+)(createStore)
+let store = finalCreateStore(combineReducers(reducers))
 
 
 class App extends React.Component {
 
     render() {
-        return (
-            <Provider store={store}>
-                <AppContainer />
-            </Provider>
-        )
+        return <Provider store={store}>
+            <AppContainer />
+        </Provider>
     }
 }
 

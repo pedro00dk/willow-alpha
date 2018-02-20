@@ -1,5 +1,4 @@
 import React from 'react'
-import { render } from 'react-dom'
 import { connect } from 'react-redux'
 
 import TextEditor from './stateless/TextEditor'
@@ -11,7 +10,7 @@ import { setInput, setInputText } from '../reducers/output'
 export default class OutputEditor extends React.Component {
 
     render() {
-        let { dispatch, output } = this.props
+        let { output } = this.props
 
         return <TextEditor
             mode={'text'}
