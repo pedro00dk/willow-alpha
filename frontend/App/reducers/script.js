@@ -28,10 +28,10 @@ export function setScript(script) {
     return { type: SET_SCRIPT, script: script }
 }
 
-export function setScriptEditable(editable) {
-    return { type: SET_SCRIPT_MARKERS, editable: editable }
+export function setEditable(editable) {
+    return { type: SET_SCRIPT_EDITABLE, editable: editable }
 }
 
-export function setScriptMarkers(markers) {
+export function setMarkers(markers) {
     return { type: SET_SCRIPT_MARKERS, markers: markers }
 }
