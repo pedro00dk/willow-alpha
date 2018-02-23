@@ -44,7 +44,7 @@ export function fetchUser() {
     return dispatch => {
         dispatch({ type: FETCH_USER })
         return execute_fetch({
-            url: '/user/', method: 'post', body: { option: 'info' },
+            url: '/current_user/', method: 'post', body: { option: 'info' },
             on2XX: json => dispatch({ type: FETCH_USER_SUCCESS, json: json }),
             onNot2XX: json => dispatch({ type: FETCH_USER_ERROR, json: json }),
             onErr: err => dispatch({ type: FETCH_USER_ERROR })
@@ -56,7 +56,7 @@ export function logoutUser() {
     return dispatch => {
         dispatch({ type: LOGOUT_USER })
         return execute_fetch({
-            url: '/user/', method: 'post', body: { option: 'logout' },
+            url: '/current_user/', method: 'post', body: { option: 'logout' },
             on2XX: json => dispatch({ type: LOGOUT_USER_SUCCESS, json: json }),
             onNot2XX: json => dispatch({ type: LOGOUT_USER_ERROR, json: json }),
             onErr: err => dispatch({ type: LOGOUT_USER_ERROR })
