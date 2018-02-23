@@ -301,7 +301,7 @@ class TracerProcess:
         end = event == 'return' and depth <= 1
         return {
             'event': event, 'line': line, 'text': text, 'stack': stack, 'depth': depth, 'args': args, 'end': end,
-            'locals': json.dumps(self.build_locals_graph(frame), indent=4, cls=JSONStrEncoder)
+            'locals': json.dumps(self.build_locals_graph(frame), cls=JSONStrEncoder)
         }
 
     def get_stack(self, frame):
@@ -350,35 +350,7 @@ class TracerProcess:
 
 
 def main():
-    s = '''
-import itertools
-
-x = input('asdf')
-y = 123
-z = False
-w = None
-f = 123.3
-a = (x, z)
-b = [w, f]
-c = {a:b, f: w}
-
-class Cls:
-    APT = 'hellow'
-    XXX = c
-
-clsc = Cls
-
-cls = Cls()
-cls.ttt = clsc.XXX
-
-print(x)
-'''
-    t = StepTracerController(s)
-    import pprint
-    pprint.pprint(t.start(), indent=4, width=200)
-    pprint.pprint(t.step_out(), indent=4, width=200)
-    t.send_input('1234')
-    pprint.pprint(t.step_out(), indent=4, width=200)
+    pass
 
 
 if __name__ == '__main__':

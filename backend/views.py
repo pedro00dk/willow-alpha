@@ -1,8 +1,6 @@
 from django.contrib.auth import logout
 from django.contrib.auth.models import Group, User
-from django.db.models import Model
 from rest_framework import permissions, response, status, views, viewsets
-from rest_framework.parsers import JSONParser
 
 from backend import models, serializers
 from backend.tracer import tracer
@@ -21,20 +19,18 @@ class IsReadonly(permissions.BasePermission):
 def require_option(request, option_name):
     option = request.data.get(option_name)
     error_response = None if option is not None else response.Response(
-        {'detail': f'{option_name} not provided'},
-        status=status.HTTP_400_BAD_REQUEST
+        {'detail': f'{option_name} not provided'}, status=status.HTTP_400_BAD_REQUEST
     )
     return option, error_response
 
 
 def option_not_supported(option, options):
     return response.Response(
-        {'detail': f'option {option} not supported, options available are {[*options]}'},
-        status.HTTP_400_BAD_REQUEST
+        {'detail': f'option {option} not supported, options available are {[*options]}'}, status.HTTP_400_BAD_REQUEST
     )
 
 
-# viewsets
+# view sets
 
 class UserViewSet(viewsets.ModelViewSet):
 
@@ -50,7 +46,7 @@ class GroupViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.GroupSerializer
 
 
-class ExerciseViewset(viewsets.ModelViewSet):
+class ExerciseViewSet(viewsets.ModelViewSet):
 
     permission_classes = (IsReadonly,)
     queryset = models.Exercise.objects.all()
@@ -59,11 +55,11 @@ class ExerciseViewset(viewsets.ModelViewSet):
 
 # api views
 
-class CurrentUserControllerAPIView(views.APIView):
+class CurrentUserAPIView(views.APIView):
 
     permission_classes = (permissions.IsAuthenticated,)
 
-    def post(self, request, format=None):
+    def post(self, request):
         option, error_response = require_option(request, 'option')
         if error_response is not None:
             return error_response
@@ -71,16 +67,16 @@ class CurrentUserControllerAPIView(views.APIView):
             'info': self.info,
             'logout': self.logout
         }
-        action = options.get(option, lambda request: option_not_supported(option, options))
+        action = options.get(option, lambda req: option_not_supported(option, options))
         return action(request)
 
     def info(self, request):
         serializer = serializers.UserSerializer(User.objects.get(id=request.user.id))
-        return response.Response({'detail': 'user information', **serializer.data})
+        return response.Response({'detail': 'info', **serializer.data})
 
     def logout(self, request):
         logout(request)
-        return response.Response({'detail': 'logout successful'})
+        return response.Response({'detail': 'logout'})
 
 
 class TracerAPIView(views.APIView):
@@ -88,26 +84,25 @@ class TracerAPIView(views.APIView):
     permission_classes = (permissions.IsAuthenticated,)
     user_tracers = {}
 
-    def post(self, request, format=None):
+    def post(self, request):
         option, error_response = require_option(request, 'option')
         if error_response is not None:
             return error_response
         options = {
             'start': self.start,
             'stop': self.stop,
-            'step_over': lambda request: self.step(request, 'step_over'),
-            'step_into': lambda request: self.step(request, 'step_into'),
-            'step_out': lambda request: self.step(request, 'step_out'),
+            'step_over': lambda req: self.step(req, 'step_over'),
+            'step_into': lambda req: self.step(req, 'step_into'),
+            'step_out': lambda req: self.step(req, 'step_out'),
             'input': self.input
         }
-        action = options.get(option, lambda request: option_not_supported(option, options))
+        action = options.get(option, lambda req: option_not_supported(option, options))
         return action(request)
 
     def require_tracer(self, request):
         user_tracer = TracerAPIView.user_tracers.get(request.user.id)
         error_response = None if user_tracer is not None else response.Response(
-            {'detail': 'tracer is not running'},
-            status=status.HTTP_400_BAD_REQUEST
+            {'detail': 'missing tracer'}, status=status.HTTP_400_BAD_REQUEST
         )
         return user_tracer, error_response
 
@@ -119,23 +114,23 @@ class TracerAPIView(views.APIView):
         if user_tracer is not None:
             try:
                 user_tracer.stop()
-            except Exception as e:
+            except:
                 pass
-        TracerAPIView.user_tracers[request.user.id] = tracer.StepTracerController(script)
-        return response.Response(
-            {'detail': f'tracer {"started" if user_tracer is None else "restarted"}'}
-        )
+        user_tracer = tracer.StepTracerController(script)
+        TracerAPIView.user_tracers[request.user.id] = user_tracer
+        trace_response = user_tracer.start()
+        return response.Response({'detail': 'start', **trace_response})
 
     def stop(self, request):
-        user_tracer, error_response = require_tracer(request)
+        user_tracer, error_response = self.require_tracer(request)
         if error_response is not None:
             return error_response
         try:
             user_tracer.stop()
-        except Exception as e:
+        except:
             pass
         TracerAPIView.user_tracers.pop(request.user.id)
-        return response.Response({'detail': 'tracer stopped'})
+        return response.Response({'detail': 'stop'})
 
     def step(self, request, step_type):
         user_tracer, error_response = self.require_tracer(request)
@@ -143,10 +138,10 @@ class TracerAPIView(views.APIView):
             return error_response
         step_method = getattr(user_tracer,  step_type)
         try:
-            events = step_method()
-            return response.Response({'detail': f'{step_type} successful', 'events': events})
+            tracer_responses = step_method()
+            return response.Response({'detail': f'{step_type}', 'responses': tracer_responses})
         except Exception as e:
-            return response.Response({'detail': str(e), 'events': []})
+            return response.Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def input(self, request):
         input_data, error_response = require_option(request, 'input')
@@ -160,4 +155,4 @@ class TracerAPIView(views.APIView):
                 user_tracer.send_input(str(data))
         else:
             user_tracer.send_input(str(input_data))
-        return response.Response({'detail': 'input received'})
+        return response.Response({'detail': 'input'})
