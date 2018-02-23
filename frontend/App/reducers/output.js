@@ -7,7 +7,7 @@ export default function reduce(state = initialState, action = {}) {
     switch (action.type) {
         case SET_OUTPUT:
             return { ...state, output: action.output }
-        case SET_OUTPUT:
+        case UPDATE_OUTPUT:
             return { ...state, output: state.output + action.append }
         default:
             return state
