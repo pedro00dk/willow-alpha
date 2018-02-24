@@ -7,9 +7,9 @@ const initialState = {
 // reducer
 export default function reduce(state = initialState, action = {}) {
     switch (action.type) {
-        case SET_INPUT:
+        case INPUT_SET:
             return { ...state, input: action.input, inputText: action.inputText }
-        case SET_READ_LINES:
+        case INPUT_READ_LINES:
             return { ...state, readLines: action.readLines }
         default:
             return state
@@ -17,14 +17,14 @@ export default function reduce(state = initialState, action = {}) {
 }
 
 // actions
-const SET_INPUT = 'SET_INPUT'
-const SET_READ_LINES = 'SET_READ_LINES'
+const INPUT_SET = 'INPUT_SET'
+const INPUT_READ_LINES = 'INPUT_READ_LINES'
 
 // action creators
 export function setInput(input, inputText) {
-    return { type: SET_INPUT, input: input, inputText: inputText }
+    return { type: INPUT_SET, input: input, inputText: inputText }
 }
 
 export function setReadLines(readLines) {
-    return { type: SET_READ_LINES, readLines: readLines }
+    return { type: INPUT_READ_LINES, readLines: readLines }
 }

@@ -9,13 +9,13 @@ const initialState = {
 // reducer
 export default function reduce(state = initialState, action = {}) {
     switch (action.type) {
-        case FETCH_EXERCISES:
-            return { ...state, isFetching: true, exercises: [] }
-        case FETCH_EXERCISES_SUCCESS:
-            return { ...state, isFetching: false, exercises: action.json }
-        case FETCH_EXERCISES_ERROR:
-            return { ...state, isFetching: false, exercises: null }
-        case SELECT_EXERCISE:
+        case EXERCISE_FETCH:
+            return { ...initialState, isFetching: true }
+        case EXERCISE_FETCH_SUCCESS:
+            return { ...initialState, exercises: action.json }
+        case EXERCISE_FETCH_ERROR:
+            return { ...initialState, exercises: null }
+        case EXERCISE_SELECT:
             return { ...state, selected: action.selected }
         default:
             return state
@@ -23,24 +23,24 @@ export default function reduce(state = initialState, action = {}) {
 }
 
 // actions
-const FETCH_EXERCISES = 'FETCH_EXERCISES'
-const FETCH_EXERCISES_SUCCESS = 'FETCH_EXERCISES_SUCCESS'
-const FETCH_EXERCISES_ERROR = 'FETCH_EXERCISES_ERROR'
-const SELECT_EXERCISE = 'SELECT_EXERCISE'
+const EXERCISE_FETCH = 'EXERCISE_FETCH'
+const EXERCISE_FETCH_SUCCESS = 'EXERCISE_FETCH_SUCCESS'
+const EXERCISE_FETCH_ERROR = 'EXERCISE_FETCH_ERROR'
+const EXERCISE_SELECT = 'EXERCISE_SELECT'
 
 // action creators
 export function fetchExercises() {
     return dispatch => {
-        dispatch({ type: FETCH_EXERCISES })
+        dispatch({ type: EXERCISE_FETCH })
         return execute_fetch({
             url: '/exercises/',
-            on2XX: json => dispatch({ type: FETCH_EXERCISES_SUCCESS, json: json }),
-            onNot2XX: json => dispatch({ type: FETCH_EXERCISES_ERROR, json: json }),
-            onErr: err => dispatch({ type: FETCH_EXERCISES_ERROR })
+            on2XX: json => dispatch({ type: EXERCISE_FETCH_SUCCESS, json: json }),
+            onNot2XX: json => dispatch({ type: EXERCISE_FETCH_ERROR, json: json }),
+            onErr: err => dispatch({ type: EXERCISE_FETCH_ERROR })
         })
     }
 }
 
 export function selectExercise(exercise) {
-    return { type: SELECT_EXERCISE, selected: exercise }
+    return { type: EXERCISE_SELECT, selected: exercise }
 }

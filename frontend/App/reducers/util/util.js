@@ -5,10 +5,7 @@ export function execute_fetch({url, crd = true, method = 'get', body = null, log
     onRes = null, onErr = null}) {
     let request_init = {
         method: method,
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        },
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json'},
     }
     if (crd) {
         request_init.credentials = 'same-origin'

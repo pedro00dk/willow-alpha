@@ -5,9 +5,9 @@ const initialState = {
 // reducer
 export default function reduce(state = initialState, action = {}) {
     switch (action.type) {
-        case SET_OUTPUT:
+        case OUTPUT_SET:
             return { ...state, output: action.output }
-        case UPDATE_OUTPUT:
+        case OUTPUT_UPDATE:
             return { ...state, output: state.output + action.append }
         default:
             return state
@@ -15,14 +15,14 @@ export default function reduce(state = initialState, action = {}) {
 }
 
 // actions
-const SET_OUTPUT = 'SET_OUTPUT'
-const UPDATE_OUTPUT = 'UPDATE_OUTPUT'
+const OUTPUT_SET = 'OUTPUT_SET'
+const OUTPUT_UPDATE = 'OUTPUT_UPDATE'
 
 // action creators
 export function setOutput(output) {
-    return { type: SET_OUTPUT, output: output }
+    return { type: OUTPUT_SET, output: output }
 }
 
 export function updateOutput(append) {
-    return { type: UPDATE_OUTPUT, append: append }
+    return { type: OUTPUT_UPDATE, append: append }
 }
