@@ -1,6 +1,6 @@
 import Cookies from 'js-cookie'
 
-export function execute_fetch({url, crd = true, method = 'get', body = null, log = true,
+export function execute_fetch({url, crd = true, method = 'get', body = null, log = false,
     on2XX = null, onNot2XX = null, on3XX = null, on4XX = null, on5XX = null, onAny = null,
     onRes = null, onErr = null}) {
     let request_init = {
