@@ -194,7 +194,7 @@ class FilteredTracerController(TracerController):
 
 
 class StepTracerController(FilteredTracerController):
-    """Tracer extension with step and breakpoint support."""
+    """Tracer extension with step support."""
 
     def __init__(self, script):
         super().__init__(script)
@@ -270,7 +270,7 @@ class TracerProcess:
             self.sub_main_queue.put({
                 'event': EVENT_ERROR,
                 'value': {
-                    'type': type(e), 'value': e.args, 'tb': traceback.format_exception(type(e), e, e.__traceback__)
+                    'type': str(type(e)), 'value': e.args, 'tb': traceback.format_exception(type(e), e, e.__traceback__)
                 },
             })
             self.main_sub_queue.get()
@@ -296,7 +296,7 @@ class TracerProcess:
         line = frame.f_lineno - 1
         text = self.script_lines[line]
         stack, depth = self.get_stack(frame)
-        args = {'type': args[0], 'value': args[1].args, 'tb': traceback.format_exception(args[0], args[1], args[2])} \
+        args = {'type': str(args[0]), 'value': args[1].args, 'tb': traceback.format_exception(*args)} \
             if event == 'exception' else args
         end = event == 'return' and depth <= 1
         return {
