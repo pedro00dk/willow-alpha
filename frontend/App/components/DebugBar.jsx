@@ -8,80 +8,121 @@ import stepOutBtn from './debugBar/stepOutBtn.png'
 import restartBtn from './debugBar/restartBtn.png'
 import stopBtn from './debugBar/stopBtn.png'
 
-import { debugStart, debugStop, stepOver, stepInto, stepOut, send_input } from '../reducers/debug'
+import { startDebug, stopDebug, stepOver, stepInto, stepOut, send_input } from '../reducers/debug'
 import { setReadLines } from '../reducers/input'
-import { setScriptMarkers } from '../reducers/script'
+import { setOutput, updateOutput } from '../reducers/output'
+import { setEditable, setMarkers } from '../reducers/script'
 
 
 @connect(state => ({
     debug: state.debug,
-    user: state.user,
     exercise: state.exercise,
-    script: state.script,
     input: state.input,
-    output: state.output
+    output: state.output,
+    script: state.script,
+    user: state.user
 }))
 export default class DebugBar extends React.Component {
 
     constructor(props) {
         super(props)
 
+        this.state = {
+            processedResponses: 0,
+            savedException: null
+        }
+
         // binds
+        this.resetState = this.resetState.bind(this)
         this.play = this.play.bind(this)
-        this.stepOver = this.stepOver.bind(this)
-        this.stepInto = this.stepInto.bind(this)
-        this.stepOut = this.stepOut.bind(this)
         this.stop = this.stop.bind(this)
+        this.stepInto = this.stepInto.bind(this)
+        this.stepOver = this.stepOver.bind(this)
+        this.stepOut = this.stepOut.bind(this)
+    }
+
+    resetState() {
+        this.state = {
+            processedResponses: 0,
+            savedException: null
+        }
     }
 
     play() {
-        let { dispatch, debug, script } = this.props
+        let { dispatch, script } = this.props
 
-        if (!debug.isDebugging) dispatch(debugStart(script.script))
-        else dispatch(debugStart(script.script)) // # continue
-    }
+        this.resetState()
+        dispatch(setEditable(false))
+        dispatch(setMarkers([]))
+        dispatch(setReadLines(0))
+        dispatch(setOutput(''))
 
-    stepOver() {
-        let { dispatch, debug, script, input } = this.props
-
-        // check if input needed
-        if (debug.events.length !== 0 && debug.events[debug.events.length - 1][0] === 'input'
-            && input.input.length > input.readLines) {
-            dispatch(send_input(input.input[input.readLines]))
-            dispatch(setReadLines(input.readLines + 1))
-        }
-        dispatch(stepOver())
-    }
-
-    stepInto() {
-        let { dispatch, debug } = this.props
-
-        // check if input needed
-        if (debug.events.length !== 0 && debug.events[debug.events.length - 1][0] === 'input'
-            && input.input.length > input.readLines) {
-            dispatch(input(input.input[input.readLines]))
-            dispatch(setReadLines(input.readLines + 1))
-        }
-        dispatch(stepInto())
-    }
-
-    stepOut() {
-        let { dispatch, debug } = this.props
-
-        // check if input needed
-        if (debug.events.length !== 0 && debug.events[debug.events.length - 1][0] === 'input'
-            && input.input.length > input.readLines) {
-            dispatch(input(input.input[input.readLines]))
-            dispatch(setReadLines(input.readLines + 1))
-        }
-        dispatch(stepOut())
+        dispatch(startDebug(script.script))
     }
 
     stop() {
         let { dispatch, debug } = this.props
 
+        this.resetState()
+        dispatch(setEditable(true))
+        dispatch(setMarkers([]))
         dispatch(setReadLines(0))
-        dispatch(debugStop(script.script))
+
+        dispatch(stopDebug())
+    }
+
+    stepInto() {
+        let { dispatch } = this.props
+
+        dispatch(stepInto())
+    }
+
+    stepOver() {
+        let { dispatch } = this.props
+
+        dispatch(stepOver())
+    }
+
+    stepOut() {
+        let { dispatch } = this.props
+
+        dispatch(stepOut())
+    }
+
+    componentDidUpdate() {
+        let { dispatch, debug, input, output, script } = this.props
+
+        if (!debug.isDebugging) return
+        let responsesToProcess = this.state.processedResponses - debug.responses.length !== 0
+            ? debug.responses.slice(this.state.processedResponses - debug.responses.length) : []
+        this.state.processedResponses = debug.responses.length
+        responsesToProcess.forEach(response => {
+            console.log(response)
+            if (response.event === 'start') dispatch(stepOver())
+            else if (response.event === 'error') {
+                dispatch(updateOutput(response.value.tb
+                    .filter((line, i) => i !== 1)
+                    .reduce((str1, str2) => str1 + str2)
+                ))
+                this.stop()
+            } else if (response.event === 'frame') {
+                dispatch(setMarkers([response.value.line]))
+                if (response.value.end) {
+                    if (this.state.savedException !== null) dispatch(updateOutput(
+                        this.state.savedException.tb.reduce((str1, str2) => str1 + str2)
+                    ))
+                    this.stop()
+                }
+                this.state.savedException = response.value.event === 'exception' ? response.value.args : null
+            } else if (response.event === 'input') {
+                //  TODO
+            } else if (response.event === 'print') dispatch(updateOutput(response.value))
+        });
+
+    }
+
+    shouldComponentUpdate(nextProps, nextState, nextContext) {
+        return this.props.debug !== nextProps.debug
     }
 
     render() {
@@ -118,11 +159,9 @@ export default class DebugBar extends React.Component {
                         onClick={this.start}
                     />
                     <img src={stopBtn}
-                        style={debug.isFetching || !debug.isDebugging ? disabledButton : button}
-                        disabled={debug.isFetching || !debug.isDebugging}
+                        style={button}
                         onClick={this.stop}
                     />
-                    {debug.json !== null && debug.json.detail !== undefined ? debug.json.detail : null}
                 </div>
             </div>
         )
