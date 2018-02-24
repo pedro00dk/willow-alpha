@@ -9,10 +9,8 @@ import AppContainer from './App/containers/AppContainer'
 import * as reducers from './App/reducers'
 
 
-let finalCreateStore = compose(
-    applyMiddleware(thunk),
-    window.devToolsExtension ? window.devToolsExtension() : f => f
-)(createStore)
+let finalCreateStore = compose(applyMiddleware(thunk), window.devToolsExtension ? window.devToolsExtension() : f => f)
+    (createStore)
 let store = finalCreateStore(combineReducers(reducers))
 
 

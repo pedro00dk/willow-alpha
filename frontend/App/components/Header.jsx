@@ -23,17 +23,15 @@ export default class Header extends React.Component {
             <a className='navbar-brand' href='#' onClick={() => dispatch(selectExercise(null))}>
                 Willow
             </a>
-            <button className='navbar-toggler' type='button' data-toggle='collapse'
-                data-target='#headerContent' aria-controls='headerContent' aria-expanded='false'
-                aria-label='Toggle navigation'>
+            <button className='navbar-toggler' type='button' data-toggle='collapse' data-target='#headerContent'
+                aria-controls='headerContent' aria-expanded='false' aria-label='Toggle navigation'>
                 <span className='navbar-toggler-icon'></span>
             </button>
             <div className='collapse navbar-collapse' id='headerContent'>
                 <ul className='navbar-nav mr-auto'>
                     <li className='nav-item active dropdown'>
-                        <a className='nav-link dropdown-toggle' href='#' id='navbarDropdown'
-                            role='button' data-toggle='dropdown' aria-haspopup='true'
-                            aria-expanded='false'>
+                        <a className='nav-link dropdown-toggle' href='#' id='navbarDropdown' role='button'
+                            data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>
                             Exercises
                         </a>
                         <div className='dropdown-menu' aria-labelledby='navbarDropdown'>
@@ -63,9 +61,9 @@ export default class Header extends React.Component {
             return <a className='dropdown-item' href='#'>
                 No exercises found
             </a>
-        return exercise.exercises.map(e =>
-            <a className='dropdown-item' href='#' onClick={() => dispatch(selectExercise(e))}>
-                {e.name}
+        return exercise.exercises.map((exercise, i) =>
+            <a className='dropdown-item' href='#' onClick={() => dispatch(selectExercise(exercise))}>
+                {exercise.name}
             </a>
         )
     }
