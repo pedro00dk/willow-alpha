@@ -119,7 +119,7 @@ class TracerAPIView(views.APIView):
         user_tracer = tracer.StepTracerController(script)
         TracerAPIView.user_tracers[request.user.id] = user_tracer
         trace_response = user_tracer.start()
-        return response.Response({'detail': 'start', **trace_response})
+        return response.Response({'detail': 'start', 'responses': trace_response})
 
     def stop(self, request):
         user_tracer, error_response = self.require_tracer(request)
