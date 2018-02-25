@@ -163,9 +163,6 @@ class TracerController:
             if self.previous_event == EVENT_INPUT:
                 self.input_count -= 1
             response = self.sub_main_queue.get()
-        if response['event'] == EVENT_ERROR:
-            print(response)
-            raise Exception()
         if response['event'] == EVENT_FRAME and response['value']['end']:
             self.state = TracerController.STATE_STOPPED
             self.tracer_subprocess.terminate()
@@ -245,7 +242,7 @@ class TracerProcess:
 
     def __init__(self, script, main_sub_queue, sub_main_queue, main_sub_io_queue, sub_main_io_queue):
         self.script = script
-        self.script_lines = self.script.splitlines()
+        self.script_lines = self.script.splitlines() if script != '' else ['']
         self.main_sub_queue = main_sub_queue
         self.sub_main_queue = sub_main_queue
         self.main_sub_io_queue = main_sub_io_queue
