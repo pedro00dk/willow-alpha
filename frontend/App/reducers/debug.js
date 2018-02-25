@@ -111,7 +111,7 @@ function step(type) {
     }
 }
 
-export function send_input(input) {
+export function sendInput(input) {
     return dispatch => {
         dispatch({ type: DEBUG_SEND_INPUT })
         return execute_fetch({

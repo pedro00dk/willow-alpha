@@ -8,7 +8,7 @@ import stepOutBtn from './debugBar/stepOutBtn.png'
 import restartBtn from './debugBar/restartBtn.png'
 import stopBtn from './debugBar/stopBtn.png'
 
-import { startDebug, stopDebug, stepOver, stepInto, stepOut, send_input } from '../reducers/debug'
+import { startDebug, stopDebug, stepOver, stepInto, stepOut, sendInput } from '../reducers/debug'
 import { setReadLines } from '../reducers/input'
 import { setOutput, updateOutput } from '../reducers/output'
 import { setEditable, setMarkers } from '../reducers/script'
@@ -91,15 +91,15 @@ export default class DebugBar extends React.Component {
 
     componentDidUpdate() {
         let { dispatch, debug, input, output, script } = this.props
-
         if (!debug.isDebugging) return
         let responsesToProcess = this.state.processedResponses - debug.responses.length !== 0
             ? debug.responses.slice(this.state.processedResponses - debug.responses.length) : []
+        if (responsesToProcess.length === 0) return
         this.state.processedResponses = debug.responses.length
         responsesToProcess.forEach(response => {
-            console.log(response)
-            if (response.event === 'start') dispatch(stepOver())
-            else if (response.event === 'error') {
+            if (response.event === 'start') {
+                this.stepInto()
+            } else if (response.event === 'error') {
                 dispatch(updateOutput(response.value.tb
                     .filter((line, i) => i !== 1)
                     .reduce((str1, str2) => str1 + str2)
@@ -114,9 +114,17 @@ export default class DebugBar extends React.Component {
                     this.stop()
                 }
                 this.state.savedException = response.value.event === 'exception' ? response.value.args : null
-            } else if (response.event === 'input') {
-                //  TODO
-            } else if (response.event === 'print') dispatch(updateOutput(response.value))
+            } else if (response.event === 'input' || response.event === 'require_input') {
+                dispatch(updateOutput(response.value))
+                if (input.input.length > input.readLines) {
+                    let inputLine = input.input[input.input.length - 1]
+                    dispatch(sendInput(inputLine))
+                    dispatch(setReadLines(input.readLines + 1))
+                    dispatch(updateOutput(inputLine + '\n'))
+                }
+            } else if (response.event === 'print') {
+                dispatch(updateOutput(response.value))
+            }
         });
 
     }
@@ -135,7 +143,6 @@ export default class DebugBar extends React.Component {
                 <div className='col'>
                     <img src={playBtn}
                         style={debug.isFetching ? disabledButton : button}
-                        disabled={debug.isFetching}
                         onClick={this.play}
                     />
                     <img src={stepOverBtn}
