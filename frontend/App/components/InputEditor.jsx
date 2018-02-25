@@ -19,8 +19,7 @@ export default class InputEditor extends React.Component {
             let selFrom = ace.selection.getSelectionAnchor()
             let selTo = ace.selection.getSelectionLead()
             if (event.command.name === 'insertstring' || event.command.name === 'paste' ||
-                event.command.name === 'backspace' || event.command.name === 'del' ||
-                event.command.name === 'cut') {
+                event.command.name === 'backspace' || event.command.name === 'del' || event.command.name === 'cut') {
                 if (selFrom.row < readLines || selTo.row < readLines) {
                     event.preventDefault()
                     event.stopPropagation()
@@ -35,10 +34,7 @@ export default class InputEditor extends React.Component {
         let onTextChange = (change, ace) => {
             let { dispatch } = this.props
 
-            dispatch(setInput(
-                ace.session.getLines(0, ace.session.getLength() - 2),
-                ace.session.getValue()
-            ))
+            dispatch(setInput(ace.session.getLines(0, ace.session.getLength() - 2),ace.session.getValue()))
         }
 
         return <TextEditor
