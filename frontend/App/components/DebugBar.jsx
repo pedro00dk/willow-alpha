@@ -138,40 +138,38 @@ export default class DebugBar extends React.Component {
     render() {
         let { debug } = this.props
 
-        let button = { width: '40px', height: '40px', cursor: 'pointer' }
+        let button = { height: '100%', cursor: 'pointer' }
         let disabledButton = { ...button, filter: 'grayscale(100%)' }
         return (
-            <div className='row'>
-                <div className='col'>
-                    <img src={playBtn}
-                        style={debug.isFetching ? disabledButton : button}
-                        onClick={this.play}
-                    />
-                    <img src={stepOverBtn}
-                        style={debug.isFetching || !debug.isDebugging ? disabledButton : button}
-                        disabled={debug.isFetching || !debug.isDebugging}
-                        onClick={this.stepOver}
-                    />
-                    <img src={stepIntoBtn}
-                        style={debug.isFetching || !debug.isDebugging ? disabledButton : button}
-                        disabled={debug.isFetching || !debug.isDebugging}
-                        onClick={this.stepInto}
-                    />
-                    <img src={stepOutBtn}
-                        style={debug.isFetching || !debug.isDebugging ? disabledButton : button}
-                        disabled={debug.isFetching || !debug.isDebugging}
-                        onClick={this.stepOut}
-                    />
-                    <img src={restartBtn}
-                        style={debug.isFetching || !debug.isDebugging ? disabledButton : button}
-                        disabled={debug.isFetching || !debug.isDebugging}
-                        onClick={this.start}
-                    />
-                    <img src={stopBtn}
-                        style={button}
-                        onClick={this.stop}
-                    />
-                </div>
+            <div className='col' {...this.props}>
+                <img src={playBtn}
+                    style={debug.isFetching ? disabledButton : button}
+                    onClick={this.play}
+                />
+                <img src={stepOverBtn}
+                    style={debug.isFetching || !debug.isDebugging ? disabledButton : button}
+                    disabled={debug.isFetching || !debug.isDebugging}
+                    onClick={this.stepOver}
+                />
+                <img src={stepIntoBtn}
+                    style={debug.isFetching || !debug.isDebugging ? disabledButton : button}
+                    disabled={debug.isFetching || !debug.isDebugging}
+                    onClick={this.stepInto}
+                />
+                <img src={stepOutBtn}
+                    style={debug.isFetching || !debug.isDebugging ? disabledButton : button}
+                    disabled={debug.isFetching || !debug.isDebugging}
+                    onClick={this.stepOut}
+                />
+                <img src={restartBtn}
+                    style={debug.isFetching || !debug.isDebugging ? disabledButton : button}
+                    disabled={debug.isFetching || !debug.isDebugging}
+                    onClick={this.start}
+                />
+                <img src={stopBtn}
+                    style={button}
+                    onClick={this.stop}
+                />
             </div>
         )
     }
