@@ -148,21 +148,19 @@ class TracerController:
             return {'event': EVENT_REQUIRE_INPUT}
         if self.previous_event == EVENT_FRAME:
             self.main_sub_queue.put(ACTION_NEXT)
-            while True:
-                try:
-                    response = self.sub_main_io_queue.get_nowait()
-                    break
-                except queue.Empty:
-                    pass
-                try:
-                    response = self.sub_main_queue.get_nowait()
-                    break
-                except queue.Empty:
-                    pass
-        else:
-            if self.previous_event == EVENT_INPUT:
-                self.input_count -= 1
-            response = self.sub_main_queue.get()
+        while True:
+            try:
+                response = self.sub_main_io_queue.get_nowait()
+                break
+            except queue.Empty:
+                pass
+            try:
+                response = self.sub_main_queue.get_nowait()
+                break
+            except queue.Empty:
+                pass
+        if self.previous_event == EVENT_INPUT:
+            self.input_count -= 1
         if response['event'] == EVENT_FRAME and response['value']['end']:
             self.state = TracerController.STATE_STOPPED
             self.tracer_subprocess.terminate()
