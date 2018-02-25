@@ -17,6 +17,9 @@ EVENT_INPUT = 'input'
 EVENT_PRINT = 'print'
 EVENT_QUIT = 'quit'
 
+# Possible events in controller.
+EVENT_REQUIRE_INPUT = 'require_input'
+
 # Traceable frame events.
 FRAME_EVENTS = {'call', 'line', 'exception', 'return'}
 
@@ -139,7 +142,10 @@ class TracerController:
 
     def next_response(self):
         self.require_state(TracerController.STATE_RUNNING)
-        self.check_input()
+        try:
+            self.check_input()
+        except:
+            return {'event': EVENT_REQUIRE_INPUT}
         if self.previous_event == EVENT_FRAME:
             self.main_sub_queue.put(ACTION_NEXT)
             while True:
@@ -187,7 +193,7 @@ class FilteredTracerController(TracerController):
     def next_response(self):
         while True:
             response = super().next_response()
-            if response['event'] in {EVENT_INPUT, EVENT_PRINT} or \
+            if response['event'] in {EVENT_REQUIRE_INPUT, EVENT_INPUT, EVENT_PRINT} or \
                     response['value']['event'] in {'line', 'exception'} or \
                     self.state == TracerController.STATE_STOPPED:
                 return response
@@ -213,7 +219,7 @@ class StepTracerController(FilteredTracerController):
         while True:
             response = super().next_response()
             responses.append(response)
-            if self.state == TracerController.STATE_STOPPED or \
+            if self.state == TracerController.STATE_STOPPED or response['event'] == EVENT_REQUIRE_INPUT or \
                     (response['event'] == EVENT_INPUT and self.input_count == 0) or \
                     (response['event'] == EVENT_FRAME and response['value']['depth'] <= self.depth):
                 self.depth = response['value']['depth'] if response['event'] == EVENT_FRAME else self.depth
@@ -224,7 +230,7 @@ class StepTracerController(FilteredTracerController):
         while True:
             response = super().next_response()
             responses.append(response)
-            if self.state == TracerController.STATE_STOPPED or \
+            if self.state == TracerController.STATE_STOPPED or response['event'] == EVENT_REQUIRE_INPUT or \
                     (response['event'] == EVENT_INPUT and self.input_count == 0) or \
                     (response['event'] == EVENT_FRAME and response['value']['depth'] < self.depth):
                 self.depth = response['value']['depth'] if response['event'] == EVENT_FRAME else self.depth
