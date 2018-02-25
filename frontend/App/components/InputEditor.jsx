@@ -24,9 +24,8 @@ export default class InputEditor extends React.Component {
                 if (selFrom.row < readLines || selTo.row < readLines) {
                     event.preventDefault()
                     event.stopPropagation()
-                } else if (event.command.name === 'backspace'
-                    && selFrom.row === selTo.row && selFrom.column === selTo.column
-                    && selTo.column === 0) {
+                } else if (event.command.name === 'backspace' && selFrom.row === readLines && selFrom.column === 0
+                    && selFrom.row === selTo.row && selFrom.column === selTo.column) {
                     event.preventDefault()
                     event.stopPropagation()
                 }
