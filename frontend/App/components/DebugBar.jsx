@@ -115,7 +115,9 @@ export default class DebugBar extends React.Component {
                 }
                 this.state.savedException = response.value.event === 'exception' ? response.value.args : null
             } else if (response.event === 'input' || response.event === 'require_input') {
-                dispatch(updateOutput(response.value))
+                if (response.event === 'input') {
+                    dispatch(updateOutput(response.value))
+                }
                 if (input.input.length > input.readLines) {
                     let inputLine = input.input[input.input.length - 1]
                     dispatch(sendInput(inputLine))
