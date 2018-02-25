@@ -17,10 +17,10 @@ export default class AppContainer extends React.Component {
                 <DebugBar style={{ height: '8vh' }}/>
             </div>
             <div className='row m-0'>
-                <div className='col-6 border p-0'>
+                <div className='col-5 border p-0'>
                     <ScriptEditor style={{ width: '100%', height: '60vh' }} />
                 </div>
-                <div className='col-6 border  p-0'>
+                <div className='col-7 border  p-0'>
                     <Inspector />
                 </div>
             </div>
