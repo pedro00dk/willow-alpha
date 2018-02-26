@@ -10,7 +10,6 @@ import ScriptEditor from '../components/ScriptEditor'
 import TextEditor from '../components/stateless/TextEditor'
 
 
-
 @connect(state => ({ exercise: state.exercise, theme: state.theme }))
 export default class AppContainer extends React.Component {
 
@@ -23,7 +22,7 @@ export default class AppContainer extends React.Component {
         ]
         let contents = [
             <div className='tab-pane fade show active' id='nav-script' role='tabpanel' aria-labelledby='nav-script-tab'>
-                <ScriptEditor style={{ width: '100%' }} />
+                <ScriptEditor style={{ width: '100%', height: '68.5vh' }} />
             </div>
         ]
         if (exercise.selected !== null) {
@@ -36,11 +35,11 @@ export default class AppContainer extends React.Component {
             )
             contents.push(
                 <div className='tab-pane fade' id='nav-readme' role='tabpanel' aria-labelledby='nav-readme-tab'>
-                    <TextEditor style={{ width: '100%' }} value={exercise.selected.readme}
+                    <TextEditor style={{ width: '100%', height: '68.5vh' }} value={exercise.selected.readme}
                         theme={theme.theme === 'light' ? 'chrome' : 'monokai'} />
                 </div>,
                 <div className='tab-pane fade' id='nav-input' role='tabpanel' aria-labelledby='nav-input-tab'>
-                    <TextEditor style={{ width: '100%' }} value={exercise.selected.input_ex}
+                    <TextEditor style={{ width: '100%', height: '68.5vh' }} value={exercise.selected.input_ex}
                         theme={theme.theme === 'light' ? 'chrome' : 'monokai'} />
                 </div>
             )
