@@ -6,11 +6,11 @@ import TextEditor from './stateless/TextEditor'
 import { setInput, setInputText } from '../reducers/input'
 
 
-@connect(state => ({ input: state.input }))
+@connect(state => ({ input: state.input, theme: state.theme }))
 export default class InputEditor extends React.Component {
 
     render() {
-        let { input } = this.props
+        let { input, theme } = this.props
 
         let onCommandExec = (event, ace) => {
             let { input } = this.props
@@ -41,6 +41,7 @@ export default class InputEditor extends React.Component {
             mode={'text'}
             showGutter={false}
             {...this.props}
+            theme={theme.theme === 'light' ? 'chrome' : 'monokai'}
             value={input.inputText}
             markers={Array(input.readLines).fill().map((_, i) => i)}
             onCommandExec={onCommandExec}

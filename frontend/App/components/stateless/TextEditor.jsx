@@ -4,6 +4,7 @@ import brace from 'brace'
 import AceEditor from 'react-ace'
 
 import 'brace/theme/chrome'
+import 'brace/theme/monokai'
 import 'brace/mode/text'
 import 'brace/mode/python'
 import 'brace/ext/searchbox'

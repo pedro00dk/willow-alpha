@@ -20,6 +20,7 @@ import { setEditable, setMarkers } from '../reducers/script'
     input: state.input,
     output: state.output,
     script: state.script,
+    theme: state.theme,
     user: state.user
 }))
 export default class DebugBar extends React.Component {
@@ -132,16 +133,16 @@ export default class DebugBar extends React.Component {
     }
 
     shouldComponentUpdate(nextProps, nextState, nextContext) {
-        return this.props.debug !== nextProps.debug
+        return this.props.debug !== nextProps.debug || this.props.theme !== nextProps.theme
     }
 
     render() {
-        let { debug } = this.props
+        let { debug, theme } = this.props
 
         let button = { height: '100%', cursor: 'pointer' }
         let disabledButton = { ...button, filter: 'grayscale(100%)' }
         return (
-            <div className='col' {...this.props}>
+            <div className={'col bg-' + theme.theme} {...this.props}>
                 <img src={playBtn}
                     style={debug.isFetching ? disabledButton : button}
                     onClick={this.play}

@@ -3,9 +3,10 @@ import { connect } from 'react-redux'
 
 import { fetchExercises, selectExercise } from '../reducers/exercise'
 import { fetchUser, logoutUser } from '../reducers/user'
+import { setLightTheme, setDarkTheme } from '../reducers/theme'
 
 
-@connect(state => ({ exercise: state.exercise, user: state.user }))
+@connect(state => ({ exercise: state.exercise, theme: state.theme, user: state.user }))
 export default class Header extends React.Component {
 
     componentDidMount() {
@@ -17,9 +18,9 @@ export default class Header extends React.Component {
     }
 
     render() {
-        let { dispatch } = this.props
+        let { dispatch, theme } = this.props
 
-        return <nav className='navbar navbar-expand-lg navbar-light bg-light' {...this.props}>
+        return <nav className={'navbar navbar-expand-lg navbar-' + theme.theme + ' bg-' + theme.theme} {...this.props}>
             <a className='navbar-brand' href='#' onClick={() => dispatch(selectExercise(null))}>
                 Willow
             </a>
@@ -30,16 +31,25 @@ export default class Header extends React.Component {
             <div className='collapse navbar-collapse' id='headerContent'>
                 <ul className='navbar-nav mr-auto'>
                     <li className='nav-item active dropdown'>
-                        <a className='nav-link dropdown-toggle' href='#' id='navbarDropdown' role='button'
+                        <a className='nav-link dropdown-toggle' href='#' id='exercisesDropdown' role='button'
                             data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>
                             Exercises
                         </a>
-                        <div className='dropdown-menu' aria-labelledby='navbarDropdown'>
+                        <div className='dropdown-menu' aria-labelledby='exercisesDropdown'>
                             {this.renderExercisesOptions()}
                         </div>
                     </li >
                 </ul>
                 <ul className='navbar-nav ml-auto'>
+                    <li className='nav-item active dropdown'>
+                        <a className='nav-link dropdown-toggle' href='#' id='themesDropdown' role='button'
+                            data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>
+                            Theme
+                        </a>
+                        <div className='dropdown-menu' aria-labelledby='themesDropdown'>
+                            {this.renderThemeOptions()}
+                        </div>
+                    </li >
                     {this.renderUserOptions()}
                 </ul>
             </div>
@@ -66,6 +76,19 @@ export default class Header extends React.Component {
                 {exercise.name}
             </a>
         )
+    }
+
+    renderThemeOptions() {
+        let { dispatch, theme } = this.props
+        return [
+            <a className='dropdown-item' href='#' onClick={() => dispatch(setLightTheme())}>
+                Light
+            </a>,
+            <a className='dropdown-item' href='#' onClick={() => dispatch(setDarkTheme())}>
+                Dark
+            </a>
+        ]
+
     }
 
     renderUserOptions() {
