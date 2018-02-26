@@ -15,6 +15,7 @@ export default class OutputEditor extends React.Component {
         let onTextChange = (change, ace) => {
             let { dispatch } = this.props
 
+            ace.selection.moveCursorFileEnd()
             ace.scrollToLine(ace.selection.getCursor().row, true, true, () => { })
         }
 
