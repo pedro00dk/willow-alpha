@@ -161,11 +161,11 @@ class TracerController:
                 pass
         if self.previous_event == EVENT_INPUT:
             self.input_count -= 1
-        if response['event'] == EVENT_FRAME and response['value']['end']:
+        self.previous_event = response['event']
+        if response['event'] == EVENT_ERROR or (response['event'] == EVENT_FRAME and response['value']['end']):
             self.state = TracerController.STATE_STOPPED
             self.tracer_subprocess.terminate()
             self.tracer_subprocess.join()
-        self.previous_event = response['event']
         return response
 
     def send_input(self, value):
@@ -188,7 +188,7 @@ class FilteredTracerController(TracerController):
     def next_response(self):
         while True:
             response = super().next_response()
-            if response['event'] in {EVENT_REQUIRE_INPUT, EVENT_INPUT, EVENT_PRINT} or \
+            if response['event'] in {EVENT_ERROR, EVENT_REQUIRE_INPUT, EVENT_INPUT, EVENT_PRINT} or \
                     response['value']['event'] in {'line', 'exception'} or \
                     self.state == TracerController.STATE_STOPPED:
                 return response
@@ -214,7 +214,8 @@ class StepTracerController(FilteredTracerController):
         while True:
             response = super().next_response()
             responses.append(response)
-            if self.state == TracerController.STATE_STOPPED or response['event'] == EVENT_REQUIRE_INPUT or \
+            if self.state == TracerController.STATE_STOPPED or \
+                    response['event'] in {EVENT_ERROR, EVENT_REQUIRE_INPUT} or \
                     (response['event'] == EVENT_INPUT and self.input_count == 0) or \
                     (response['event'] == EVENT_FRAME and response['value']['depth'] <= self.depth):
                 self.depth = response['value']['depth'] if response['event'] == EVENT_FRAME else self.depth
@@ -225,8 +226,8 @@ class StepTracerController(FilteredTracerController):
         while True:
             response = super().next_response()
             responses.append(response)
-            if self.state == TracerController.STATE_STOPPED or response['event'] == EVENT_REQUIRE_INPUT or \
-                    (response['event'] == EVENT_INPUT and self.input_count == 0) or \
+            if self.state == TracerController.STATE_STOPPED or \
+                    response['event'] in {EVENT_ERROR, EVENT_REQUIRE_INPUT} or \
                     (response['event'] == EVENT_FRAME and response['value']['depth'] < self.depth):
                 self.depth = response['value']['depth'] if response['event'] == EVENT_FRAME else self.depth
                 return responses
@@ -333,6 +334,8 @@ class TracerProcess:
         ref = str(id(obj))
         if ref in objects:
             return ref,
+        else:
+            objects[ref] = {'type': type(obj), 'members': []}
         if isinstance(obj, (tuple, list, set, frozenset)):
             members = enumerate(obj)
         elif isinstance(obj, dict):
@@ -346,7 +349,7 @@ class TracerProcess:
             return 'ignore'
         walk_members = [(self.walk_object(name, objects, user_classes), self.walk_object(value, objects, user_classes))
                         for name, value in members]
-        objects[ref] = {'type': type(obj), 'content': walk_members}
+        objects[ref]['members'] = walk_members
         return ref,
 
 
