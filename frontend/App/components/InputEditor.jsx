@@ -12,6 +12,13 @@ export default class InputEditor extends React.Component {
     render() {
         let { input, theme } = this.props
 
+        let onAceUpdate = ace => {
+            let { input } = this.props
+
+            if (input.readLines === 0) return
+            ace.scrollToLine(input.readLines - 1, true, false, () => { })
+        }
+
         let onCommandExec = (event, ace) => {
             let { input } = this.props
 
@@ -44,6 +51,7 @@ export default class InputEditor extends React.Component {
             theme={theme.theme === 'light' ? 'chrome' : 'monokai'}
             value={input.inputText}
             markers={Array(input.readLines).fill().map((_, i) => i)}
+            onAceUpdate={onAceUpdate}
             onCommandExec={onCommandExec}
             onTextChange={onTextChange}
         />
