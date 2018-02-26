@@ -22,6 +22,7 @@ export default class TextEditor extends React.Component {
 
     componentDidUpdate() {
         let ace = this.refs.race.editor
+        if (this.props.onAceUpdate !== undefined) this.props.onAceUpdate(ace)
         let markersToRemove = Object.values(ace.session.getMarkers(false))
             .filter(marker => marker.id > 2)
             .forEach(marker => ace.session.removeMarker(marker.id))
