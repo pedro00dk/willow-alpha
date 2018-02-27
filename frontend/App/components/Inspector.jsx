@@ -2,6 +2,7 @@ import React from 'react'
 import { connect } from 'react-redux'
 
 import Draggable from 'react-draggable'
+import { SortableContainer, SortableElement, arrayMove } from 'react-sortable-hoc'
 
 @connect(state => ({ debug: state.debug }))
 export default class Inspector extends React.Component {
@@ -11,7 +12,34 @@ export default class Inspector extends React.Component {
     }
 
     render() {
-        return <div><Heap /></div>
+        return <div><Stack /><Heap /></div>
+    }
+}
+
+const SortableItem = SortableElement(({ value }) => <li>{value}</li>)
+
+const SortableList = SortableContainer(({ items }) => {
+    return (
+        <ul>
+            {items.map((value, index) => (
+                <SortableItem key={`item-${index}`} index={index} value={value} />
+            ))}
+        </ul>
+    );
+});
+
+class Stack extends React.Component {
+
+    constructor(props) {
+        super(props)
+        this.state = {
+            items: ['var0', 'var1', 'var2', 'var3', 'var4']
+        }
+    }
+
+    render() {
+
+        return <SortableList items={this.state.items} onSortEnd={(o, n) => this.setState({ items: arrayMove(this.state.items, o, n) })} />
     }
 }
 
