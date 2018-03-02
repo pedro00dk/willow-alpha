@@ -6,11 +6,11 @@ import { setInput, setInputText } from '../reducers/output'
 import TextEditor from './TextEditor'
 
 
-@connect(state => ({ output: state.output, theme: state.theme }))
+@connect(state => ({ output: state.output }))
 export default class OutputEditor extends React.Component {
 
     render() {
-        let { output, theme } = this.props
+        let { output } = this.props
 
         let onChange = (change, editor) => {
             let { dispatch } = this.props

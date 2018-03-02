@@ -11,7 +11,7 @@ import TextEditor from './TextEditor'
 export default class InputEditor extends React.Component {
 
     render() {
-        let { input, theme } = this.props
+        let { input } = this.props
 
         let onExec = (event, editor) => {
             let { input } = this.props
@@ -42,7 +42,6 @@ export default class InputEditor extends React.Component {
         return <TextEditor
             editor={{
                 mode: 'text',
-                theme: theme.theme === 'light' ? 'chrome' : 'monokai',
                 value: input.inputText,
                 showGutter: false,
                 ...this.props.editor

@@ -7,11 +7,11 @@ import { setScript } from '../reducers/script'
 import TextEditor from './TextEditor'
 
 
-@connect(state => ({ script: state.script, theme: state.theme }))
+@connect(state => ({ script: state.script }))
 export default class ScriptEditor extends React.Component {
 
     render() {
-        let { script, theme } = this.props
+        let { script } = this.props
 
         let onChange = (change, editor) => {
             let { dispatch } = this.props
