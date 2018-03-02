@@ -25,20 +25,21 @@ FRAME_EVENTS = {'call', 'line', 'exception', 'return'}
 
 # builtins and modules to disable
 DISABLE_BUILTINS = {'compile', 'exec', 'open'}
-DISABLE_MODULES = {
-    'pip', 'sys', '_frozen_importlib', '_imp', '_warnings', '_thread', '_weakref', '_frozen_importlib_external', '_io',
-    'marshal', 'nt', 'winreg', 'zipimport', 'encodings', 'codecs', '_codecs', 'encodings.aliases', 'encodings.utf_8',
-    '_signal', '__main__', 'encodings.latin_1', 'io', 'abc', '_weakrefset', 'site', 'os', 'errno', 'stat', '_stat',
-    'ntpath', 'genericpath', 'os.path', '_collections_abc', '_sitebuiltins', 'sysconfig', 'atexit, multiprocessing',
-    'threading'
+ALLOWED_MODULES = {
+    'bisect', 'collections', 'copy', 'datetime', 'functools', 'hashlib',  'heapq', 'itertools', 'math', 'operator',
+    'random', 're', 'string', 'time', 'typing'
 }
 
 
-def disable_modules(modules):
-    """Disables the import of the received modules, modules already imported are available, current process only."""
+def disable_modules(modules, allow=False):
+    """
+    Disables the import of the received modules if allow is false, otherwise only the received methods are available,
+    modules already imported are available, current process only.
+    """
     for module in sys.modules:
-        if module in modules:
-            sys.modules[module] = None
+        sys.modules[module] = \
+            sys.modules[module] if (allow and module in modules) or (not allow and module not in modules) else None
+        
 
 
 def disable_builtins(builtins, globals_data):
@@ -260,7 +261,7 @@ class TracerProcess:
         }
         script_globals['__builtins__']['input'] = Input(self.main_sub_io_queue, self.sub_main_io_queue)
         script_globals['__builtins__']['print'] = Print(self.main_sub_io_queue, self.sub_main_io_queue)
-        disable_modules(DISABLE_MODULES)
+        disable_modules(ALLOWED_MODULES, True)
         disable_builtins(DISABLE_BUILTINS, script_globals)
         try:
             compiled = compile(self.script, SCRIPT_NAME, 'exec')
