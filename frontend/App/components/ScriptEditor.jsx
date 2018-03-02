@@ -18,6 +18,13 @@ export default class ScriptEditor extends React.Component {
 
             dispatch(setScript(editor.getValue()))
         }
+
+        let onUpdate = editor => {
+            let { script } = this.props
+
+            if (script.markers.length > 0) editor.scrollToLine(script.markers.slice(-1)[0], true, false, () => { })
+        }
+
         return <TextEditor
             editor={{
                 mode: 'python',
@@ -26,6 +33,7 @@ export default class ScriptEditor extends React.Component {
                 ...this.props.editor
             }}
             onChange={onChange}
+            onUpdate={onUpdate}
             markers={script.markers.map(line => ({
                 ln: line, cls: classNames({ 'bg-info': !script.error, 'bg-danger': script.error }, 'position-absolute')
             }))}
