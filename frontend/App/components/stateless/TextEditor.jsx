@@ -1,36 +1,40 @@
-import React from 'react'
-
 import brace from 'brace'
+import React from 'react'
 import AceEditor from 'react-ace'
 
+import 'brace/ext/searchbox'
+import 'brace/mode/python'
+import 'brace/mode/text'
 import 'brace/theme/chrome'
 import 'brace/theme/monokai'
-import 'brace/mode/text'
-import 'brace/mode/python'
-import 'brace/ext/searchbox'
 
+
+const { Range } = brace.acequire('ace/range')
 
 export default class TextEditor extends React.Component {
 
     componentDidMount() {
-        let ace = this.refs.race.editor
-        if (this.props.onCommandExec !== undefined)
-            ace.commands.on('exec', event => this.props.onCommandExec(event, ace))
-        if (this.props.onTextChange !== undefined)
-            ace.session.on('change', change => this.props.onTextChange(change, ace))
+        this.editor = this.container.editor
+
+        let { onExec, onChange, markers } = this.props
+
+        if (onExec) this.editor.commands.on('exec', event => onExec(event, this.editor))
+        if (onChange) this.editor.session.on('change', change => onChange(change, this.editor))
         this.componentDidUpdate()
     }
-
+    
     componentDidUpdate() {
-        let ace = this.refs.race.editor
-        if (this.props.onAceUpdate !== undefined) this.props.onAceUpdate(ace)
-        let markersToRemove = Object.values(ace.session.getMarkers(false))
-            .filter(marker => marker.id > 2)
-            .forEach(marker => ace.session.removeMarker(marker.id))
-        if (this.props.markers === undefined) return
-        this.props.markers.forEach(marker => ace.session.addMarker(
-            new Range(marker, 0, marker, 1), 'bg-info position-absolute', 'screenLine', false
-        ))
+        let { onUpdate, markers } = this.props
+
+        if (onUpdate) onUpdate(this.editor)
+        if (markers) {
+            Object.values(this.editor.session.getMarkers(false))
+                .filter(marker => marker.id > 2)
+                .forEach(marker => this.editor.session.removeMarker(marker.id))
+            markers.forEach(
+                ({ ln, cls }) => this.editor.session.addMarker(new Range(ln, 0, ln, 1), cls, 'screenLine', false)
+            )
+        }
     }
 
     render() {
@@ -39,11 +43,9 @@ export default class TextEditor extends React.Component {
             theme={'chrome'}
             fontSize={14}
             editorProps={{ $blockScrolling: Infinity }}
-            style={{ width: '100%' }}
-            {...this.props}
-            ref={'race'}
+            {...this.props.editor}
+            ref={reactAce => this.container = reactAce}
         />
     }
 }
 
-const { Range } = brace.acequire('ace/range')
