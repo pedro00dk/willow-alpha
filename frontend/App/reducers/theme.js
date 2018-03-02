@@ -1,12 +1,13 @@
 const initialState = {
-    theme: 'light'
+    theme: 'light',
+    editor: 'chrome'
 }
 
 // reducer
 export default function reduce(state = initialState, action = {}) {
     switch (action.type) {
         case THEME_SET:
-            return { ...state, theme: action.theme }
+            return { ...state, theme: action.theme, editor: action.editor }
         default:
             return state
     }
@@ -17,9 +18,9 @@ const THEME_SET = 'THEME_SET'
 
 // action creators
 export function setLightTheme(script) {
-    return { type: THEME_SET, theme: 'light' }
+    return { type: THEME_SET, theme: 'light', editor: 'chrome' }
 }
 
 export function setDarkTheme(editable) {
-    return { type: THEME_SET, theme: 'dark' }
+    return { type: THEME_SET, theme: 'dark', editor: 'monokai' }
 }

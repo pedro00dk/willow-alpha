@@ -1,6 +1,7 @@
 import brace from 'brace'
 import React from 'react'
 import AceEditor from 'react-ace'
+import { connect } from 'react-redux'
 
 import 'brace/ext/searchbox'
 import 'brace/mode/python'
@@ -11,6 +12,7 @@ import 'brace/theme/monokai'
 
 const { Range } = brace.acequire('ace/range')
 
+@connect(state => ({ theme: state.theme }))
 export default class TextEditor extends React.Component {
 
     componentDidMount() {
@@ -22,7 +24,7 @@ export default class TextEditor extends React.Component {
         if (onChange) this.editor.session.on('change', change => onChange(change, this.editor))
         this.componentDidUpdate()
     }
-    
+
     componentDidUpdate() {
         let { onUpdate, markers } = this.props
 
@@ -38,10 +40,13 @@ export default class TextEditor extends React.Component {
     }
 
     render() {
+        let { theme } = this.props
+
         return <AceEditor
             mode={'text'}
-            theme={'chrome'}
             fontSize={14}
+            theme={theme.editor}
+            style={{ width: '100%' }}
             editorProps={{ $blockScrolling: Infinity }}
             {...this.props.editor}
             ref={reactAce => this.container = reactAce}

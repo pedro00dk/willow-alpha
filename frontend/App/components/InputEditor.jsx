@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 
 import { setInput, setInputText } from '../reducers/input'
 
-import TextEditor from './stateless/TextEditor'
+import TextEditor from './TextEditor'
 
 
 @connect(state => ({ input: state.input, theme: state.theme }))

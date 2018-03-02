@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 
 import { setScript } from '../reducers/script'
 
-import TextEditor from './stateless/TextEditor'
+import TextEditor from './TextEditor'
 
 
 @connect(state => ({ script: state.script, theme: state.theme }))
@@ -21,7 +21,6 @@ export default class ScriptEditor extends React.Component {
         return <TextEditor
             editor={{
                 mode: 'python',
-                theme: theme.theme === 'light' ? 'chrome' : 'monokai',
                 value: script.script,
                 readOnly: !script.editable,
                 ...this.props.editor
