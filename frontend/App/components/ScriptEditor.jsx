@@ -26,7 +26,9 @@ export default class ScriptEditor extends React.Component {
                 ...this.props.editor
             }}
             onChange={onChange}
-            markers={script.markers.map(line => ({ ln: line, cls: classNames('bg-info', 'position-absolute') }))}
+            markers={script.markers.map(line => ({
+                ln: line, cls: classNames({ 'bg-info': !script.error, 'bg-danger': script.error }, 'position-absolute')
+            }))}
         />
     }
 }

@@ -110,12 +110,17 @@ export default class DebugBar extends React.Component {
             } else if (response.event === 'frame') {
                 dispatch(setMarkers([response.value.line]))
                 if (response.value.end) {
-                    if (this.state.savedException !== null) dispatch(updateOutput(
-                        this.state.savedException.tb.reduce((str1, str2) => str1 + str2)
-                    ))
+                    if (this.state.savedException !== null) {
+                        dispatch(setMarkers([response.value.line], true))
+                        dispatch(updateOutput(this.state.savedException.tb.reduce((str1, str2) => str1 + str2)))
+                    }
                     this.stop()
                 }
-                this.state.savedException = response.value.event === 'exception' ? response.value.args : null
+                if (response.value.event === 'exception') {
+                    this.state.savedException = response.value.event === 'exception' ? response.value.args : null
+                    dispatch(setMarkers([response.value.line], true))
+                }
+
             } else if (response.event === 'input' || response.event === 'require_input') {
                 if (response.event === 'input') {
                     dispatch(updateOutput(response.value))

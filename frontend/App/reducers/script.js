@@ -1,7 +1,8 @@
 const initialState = {
     script: '',
     editable: true,
-    markers: []
+    markers: [],
+    error: false
 }
 
 // reducer
@@ -12,7 +13,7 @@ export default function reduce(state = initialState, action = {}) {
         case SCRIPT_EDITABLE:
             return { ...state, editable: action.editable }
         case SCRIPT_MARKERS:
-            return { ...state, markers: action.markers }
+            return { ...state, markers: action.markers, error: action.error }
         default:
             return state
     }
@@ -32,6 +33,6 @@ export function setEditable(editable) {
     return { type: SCRIPT_EDITABLE, editable: editable }
 }
 
-export function setMarkers(markers) {
-    return { type: SCRIPT_MARKERS, markers: markers }
+export function setMarkers(markers, error = false) {
+    return { type: SCRIPT_MARKERS, markers: markers, error: error }
 }
