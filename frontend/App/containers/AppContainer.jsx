@@ -74,7 +74,7 @@ export default class AppContainer extends React.Component {
                     </div>
 
                 </div>
-                <div className={classNames('col-7', 'border', 'border-' + theme.theme, 'p-0')} style={{height: '100%'}}>
+                <div className={classNames('col-7', 'border', 'border-' + theme.theme, 'p-0')} style={{height: '30em'}}>
                     <Inspector />
                 </div>
             </div>
