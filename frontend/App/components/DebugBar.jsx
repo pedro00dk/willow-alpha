@@ -1,17 +1,18 @@
+import classNames from 'classnames'
 import React from 'react'
 import { connect } from 'react-redux'
-
-import playBtn from './debugBar/playBtn.png'
-import stepOverBtn from './debugBar/stepOverBtn.png'
-import stepIntoBtn from './debugBar/stepIntoBtn.png'
-import stepOutBtn from './debugBar/stepOutBtn.png'
-import restartBtn from './debugBar/restartBtn.png'
-import stopBtn from './debugBar/stopBtn.png'
 
 import { startDebug, stopDebug, stepOver, stepInto, stepOut, sendInput } from '../reducers/debug'
 import { setReadLines } from '../reducers/input'
 import { setOutput, updateOutput } from '../reducers/output'
 import { setEditable, setMarkers } from '../reducers/script'
+
+import playBtn from './debugBar/playBtn.png'
+import restartBtn from './debugBar/restartBtn.png'
+import stepIntoBtn from './debugBar/stepIntoBtn.png'
+import stepOutBtn from './debugBar/stepOutBtn.png'
+import stepOverBtn from './debugBar/stepOverBtn.png'
+import stopBtn from './debugBar/stopBtn.png'
 
 
 @connect(state => ({
@@ -142,7 +143,7 @@ export default class DebugBar extends React.Component {
         let button = { height: '100%', cursor: 'pointer' }
         let disabledButton = { ...button, filter: 'grayscale(100%)' }
         return (
-            <div className={'col bg-' + theme.theme} {...this.props}>
+            <div className={classNames('col', 'bg-' + theme.theme)} {...this.props}>
                 <img src={playBtn}
                     style={debug.isFetching ? disabledButton : button}
                     onClick={this.play}
