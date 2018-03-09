@@ -322,7 +322,7 @@ class TracerProcess:
     def build_locals_graph(self, frame):
         frame_locals = frame.f_locals
         objects = {}
-        user_classes = []
+        user_classes = set()
         variables = {name: self.walk_object(frame_locals[name], objects, user_classes)
                      for name, value in frame_locals.items() if not name.startswith('__') and not name.endswith('__')}
         return {'objects': objects, 'variables': variables}
@@ -336,18 +336,18 @@ class TracerProcess:
         if ref in objects:
             return ref,
         else:
-            objects[ref] = {'type': type(obj), 'members': []}
+            objects[ref] = {'type': type(obj).__name__, 'members': []}
         if isinstance(obj, (tuple, list, set, frozenset)):
             members = enumerate(obj)
         elif isinstance(obj, dict):
             members = obj.items()
         elif isinstance(obj, type) or isinstance(obj, (*user_classes,)):
             if isinstance(obj, type):
-                user_classes.append(obj)
+                user_classes.add(obj)
             members = [(name, getattr(obj, name)) for name in dir(obj)
                        if not name.startswith('__') and not name.endswith('__')]
         else:
-            return 'ignore'
+            return type(obj).__name__
         walk_members = [(self.walk_object(name, objects, user_classes), self.walk_object(value, objects, user_classes))
                         for name, value in members]
         objects[ref]['members'] = walk_members
