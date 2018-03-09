@@ -4,7 +4,6 @@ import { connect } from 'react-redux'
 import Draggable from 'react-draggable'
 import { SortableContainer, SortableElement, arrayMove } from 'react-sortable-hoc'
 
-@connect(state => ({ debug: state.debug }))
 export default class Inspector extends React.Component {
 
     constructor(props) {
@@ -12,9 +11,56 @@ export default class Inspector extends React.Component {
     }
 
     render() {
-        return <div><Stack /><Heap /></div>
+        return <div><Heap /></div>
     }
 }
+
+@connect(state => ({ debug: state.debug }))
+class Heap extends React.Component {
+
+    constructor(props) {
+        super(props)
+
+        this.state = { lastLocals: { objects: {}, variables: {} } }
+    }
+
+    render() {
+        let { debug } = this.props
+
+        this.state.lastLocals = debug.responses.length > 0 && debug.responses.slice(-1)[0].event === 'frame'
+            ? JSON.parse(debug.responses.slice(-1)[0].value.locals)
+            : this.state.lastLocals
+
+        console.log(this.state.lastLocals)
+        let objData = Object.values(this.state.lastLocals.objects)
+            .map(
+                obj => {
+                    console.log(obj)
+                    return <Draggable bounds="parent">
+                        <div className="border p-2" style={{display:"inline-block"}}>
+                            <h5>{obj.type}</h5>
+                            <div>
+                                {Object.values(obj.members).map(val => <div className='p-1' style={{display: 'inline'}}>{val[1]}</div>)}
+                            </div>
+                        </div>
+                    </Draggable>
+                }
+            )
+        console.log(objData)
+
+        return <div className='border' style={{ height: '90%', width: '100%', position: 'relative', overflow: 'auto' }}>
+            <div style={{ height: '1000px', width: '1000px', padding: '10px' }}>
+                {objData}
+                <Draggable bounds="parent">
+                    <div className="border" display="inline-block">
+                        I can only be moved within my offsetParent
+                    </div>
+                </Draggable>
+            </div>
+        </div>
+    }
+}
+
 
 const SortableItem = SortableElement(({ value }) => <li>{value}</li>)
 
@@ -27,6 +73,8 @@ const SortableList = SortableContainer(({ items }) => {
         </ul>
     );
 });
+
+
 
 class Stack extends React.Component {
 
@@ -43,27 +91,6 @@ class Stack extends React.Component {
     }
 }
 
-class Heap extends React.Component {
-
-    render() {
-        return <div className='border' style={{ height: '90%', width: '100%', position: 'relative', overflow: 'auto' }}>
-            <div style={{ height: '1000px', width: '1000px', padding: '10px' }}>
-                <Draggable bounds="parent">
-                    <div className="border">
-                        I can only be moved within my offsetParent.<br /><br />
-                        Both parent padding and child margin work properly.
-                    </div>
-                </Draggable>
-                <Draggable bounds="parent">
-                    <div className="border">
-                        I also can only be moved within my offsetParent.<br /><br />
-                        Both parent padding and child margin work properly.
-                    </div>
-                </Draggable>
-            </div>
-        </div>
-    }
-}
 
 var App = React.createClass({
     getInitialState() {
