@@ -37,10 +37,11 @@ class Heap extends React.Component {
                 obj => {
                     console.log(obj)
                     return <Draggable bounds="parent">
-                        <div className="border p-2" style={{display:"inline-block"}}>
+                        <div className="border p-2 btn-primary" style={{ display: "inline-block" }}>
                             <h5>{obj.type}</h5>
                             <div>
-                                {Object.values(obj.members).map(val => <div className='p-1' style={{display: 'inline'}}>{val[1]}</div>)}
+                                {Object.values(obj.members).map(
+                                    (val, i) => <div className='p-1' style={{ display: 'inline' }}><sup><small>{i + ' '}</small></sup>{val[1]}</div>)}
                             </div>
                         </div>
                     </Draggable>
