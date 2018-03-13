@@ -26,7 +26,7 @@ FRAME_EVENTS = {'call', 'line', 'exception', 'return'}
 # builtins and modules to disable
 DISABLE_BUILTINS = {'compile', 'exec', 'open'}
 ALLOWED_MODULES = {
-    'bisect', 'collections', 'copy', 'datetime', 'functools', 'hashlib',  'heapq', 'itertools', 'math', 'operator',
+    'bisect', 'collections', 'copy', 'datetime', 'functools', 'hashlib', 'heapq', 'itertools', 'math', 'operator',
     'random', 're', 'string', 'time', 'typing'
 }
 
@@ -39,7 +39,6 @@ def disable_modules(modules, allow=False):
     for module in sys.modules:
         sys.modules[module] = \
             sys.modules[module] if (allow and module in modules) or (not allow and module not in modules) else None
-        
 
 
 def disable_builtins(builtins, globals_data):
@@ -247,7 +246,7 @@ class TracerProcess:
         self.sub_main_queue = sub_main_queue
         self.main_sub_io_queue = main_sub_io_queue
         self.sub_main_io_queue = sub_main_io_queue
-        self.bot_frame = None
+        self.exec_frame = None
         self.quit = False
         self.start()
 
@@ -255,9 +254,11 @@ class TracerProcess:
         sys.stdin = None
         sys.stdout = None
         sys.stderr = None
+        global_builtins = globals()['__builtins__']
+        script_builtins_dict = global_builtins if isinstance(global_builtins, dict) else vars(global_builtins)
         script_globals = {
             '__name__': '__main__', '__file__': '<string>', '__doc__': None, '__package__': None, '__loader__': None,
-            '__spec__': None, '__cached__': None, '__builtins__': globals()['__builtins__'].copy()
+            '__spec__': None, '__cached__': None, '__builtins__': script_builtins_dict.copy()
         }
         script_globals['__builtins__']['input'] = Input(self.main_sub_io_queue, self.sub_main_io_queue)
         script_globals['__builtins__']['print'] = Print(self.main_sub_io_queue, self.sub_main_io_queue)
@@ -287,7 +288,7 @@ class TracerProcess:
             return self.trace_dispatch
         action = self.main_sub_queue.get()
         if action == ACTION_NEXT:
-            self.bot_frame = self.bot_frame if self.bot_frame is not None else frame
+            self.exec_frame = frame.f_back if self.exec_frame is None else self.exec_frame
             self.sub_main_queue.put({'event': EVENT_FRAME, 'value': self.get_frame_data(frame, event, args)})
             return self.trace_dispatch
         if action == ACTION_QUIT:
@@ -309,12 +310,13 @@ class TracerProcess:
 
     def get_stack(self, frame):
         stack = []
-        while frame is not None:
+        while frame != self.exec_frame:
+            if frame.f_code.co_filename != SCRIPT_NAME:
+                frame = frame.f_back
+                continue
             line = frame.f_lineno - 1
             text = self.script_lines[line]
-            stack.append({'line': line, 'text': text}),
-            if frame == self.bot_frame:
-                break
+            stack.append({'line': line, 'text': text})
             frame = frame.f_back
         depth = max(0, len(stack))
         return stack, depth
