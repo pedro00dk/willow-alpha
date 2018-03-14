@@ -218,6 +218,8 @@ class TracerProcess:
         self.sub_main_queue = sub_main_queue
         self.main_sub_io_queue = main_sub_io_queue
         self.sub_main_io_queue = sub_main_io_queue
+        self.frame_count_limit = 100000
+        self.frame_count = 0
         self.exec_frame = None
         self.quit = False
         self.start()
@@ -269,15 +271,19 @@ class TracerProcess:
             return None
 
     def get_frame_data(self, frame, event, args):
+        self.frame_count += 1
         line = frame.f_lineno - 1
         text = self.script_lines[line]
         stack, depth = self.get_stack(frame)
         args = {'type': str(args[0]), 'value': args[1].args, 'tb': traceback.format_exception(*args)} \
             if event == 'exception' else args
-        end = event == 'return' and depth <= 1
+        kill = None
+        if self.frame_count >= self.frame_count_limit:
+            kill = f'frame_count reached frame_count_limit ({self.frame_count_limit})'
+        end = event == 'return' and depth <= 1 or kill is not None
         return {
-            'event': event, 'line': line, 'text': text, 'stack': stack, 'depth': depth, 'args': args, 'end': end,
-            'locals': json.dumps(self.build_locals_graph(frame), cls=TracerProcess.JSONStrEncoder)
+            'event': event, 'line': line, 'text': text, 'stack': stack, 'depth': depth, 'args': args, 'kill': kill,
+            'end': end, 'locals': json.dumps(self.build_locals_graph(frame), cls=TracerProcess.JSONStrEncoder)
         }
 
     def get_stack(self, frame):
