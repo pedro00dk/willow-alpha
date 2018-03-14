@@ -1,4 +1,3 @@
-import classNames from 'classnames'
 import React from 'react'
 import { connect } from 'react-redux'
 
@@ -21,7 +20,6 @@ import stopBtn from './debugBar/stopBtn.png'
     input: state.input,
     output: state.output,
     script: state.script,
-    theme: state.theme,
     user: state.user
 }))
 export default class DebugBar extends React.Component {
@@ -139,16 +137,16 @@ export default class DebugBar extends React.Component {
     }
 
     shouldComponentUpdate(nextProps, nextState, nextContext) {
-        return this.props.debug !== nextProps.debug || this.props.theme !== nextProps.theme
+        return this.props.debug !== nextProps.debug
     }
 
     render() {
-        let { debug, theme } = this.props
+        let { debug } = this.props
 
         let button = { height: '100%', cursor: 'pointer' }
         let disabledButton = { ...button, filter: 'grayscale(100%)' }
         return (
-            <div className={classNames('col', 'bg-' + theme.theme)} {...this.props}>
+            <div className='col bg-light' {...this.props}>
                 <img src={playBtn}
                     style={debug.isFetching ? disabledButton : button}
                     onClick={this.play}

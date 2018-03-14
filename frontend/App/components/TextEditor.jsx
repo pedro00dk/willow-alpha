@@ -7,12 +7,10 @@ import 'brace/ext/searchbox'
 import 'brace/mode/python'
 import 'brace/mode/text'
 import 'brace/theme/chrome'
-import 'brace/theme/monokai'
 
 
 const { Range } = brace.acequire('ace/range')
 
-@connect(state => ({ theme: state.theme }))
 export default class TextEditor extends React.Component {
 
     componentDidMount() {
@@ -40,12 +38,10 @@ export default class TextEditor extends React.Component {
     }
 
     render() {
-        let { theme } = this.props
-
         return <AceEditor
             mode={'text'}
             fontSize={14}
-            theme={theme.editor}
+            theme={'chrome'}
             style={{ width: '100%' }}
             editorProps={{ $blockScrolling: Infinity }}
             {...this.props.editor}

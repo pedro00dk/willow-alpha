@@ -1,13 +1,11 @@
-import classNames from 'classnames'
 import React from 'react'
 import { connect } from 'react-redux'
 
 import { fetchExercises, selectExercise } from '../reducers/exercise'
 import { fetchUser, logoutUser } from '../reducers/user'
-import { setLightTheme, setDarkTheme } from '../reducers/theme'
 
 
-@connect(state => ({ exercise: state.exercise, theme: state.theme, user: state.user }))
+@connect(state => ({ exercise: state.exercise, user: state.user }))
 export default class Header extends React.Component {
 
     componentDidMount() {
@@ -19,9 +17,9 @@ export default class Header extends React.Component {
     }
 
     render() {
-        let { dispatch, theme } = this.props
+        let { dispatch } = this.props
 
-        return <nav className={classNames('navbar', 'navbar-expand', 'navbar-' + theme.theme, ' bg-' + theme.theme)}
+        return <nav className='navbar navbar-expand navbar-light bg-light'
             {...this.props}>
             <a className='navbar-brand' href='#' onClick={() => dispatch(selectExercise(null))}>
                 Willow
@@ -43,15 +41,6 @@ export default class Header extends React.Component {
                     </li >
                 </ul>
                 <ul className='navbar-nav ml-auto'>
-                    <li className='nav-item active dropdown'>
-                        <a className='nav-link dropdown-toggle' href='#' id='themesDropdown' role='button'
-                            data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>
-                            Theme
-                        </a>
-                        <div className='dropdown-menu' aria-labelledby='themesDropdown'>
-                            {this.renderThemeOptions()}
-                        </div>
-                    </li >
                     {this.renderUserOptions()}
                 </ul>
             </div>
@@ -79,20 +68,7 @@ export default class Header extends React.Component {
             </a>
         )
     }
-
-    renderThemeOptions() {
-        let { dispatch, theme } = this.props
-        return [
-            <a className='dropdown-item' href='#' onClick={() => dispatch(setLightTheme())}>
-                Light
-            </a>,
-            <a className='dropdown-item' href='#' onClick={() => dispatch(setDarkTheme())}>
-                Dark
-            </a>
-        ]
-
-    }
-
+    
     renderUserOptions() {
         let { dispatch, user } = this.props
 

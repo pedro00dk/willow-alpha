@@ -7,7 +7,7 @@ import { setInput, setInputText } from '../reducers/input'
 import TextEditor from './TextEditor'
 
 
-@connect(state => ({ input: state.input, theme: state.theme }))
+@connect(state => ({ input: state.input }))
 export default class InputEditor extends React.Component {
 
     render() {
