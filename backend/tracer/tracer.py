@@ -3,102 +3,35 @@ import multiprocessing
 import queue
 import sys
 import traceback
+from enum import auto, Enum
 from functools import reduce
 
-# Available controller actions
+# script name
+SCRIPT_NAME = '<script>'
+
+# actions
 ACTION_NEXT = 'next'
 ACTION_QUIT = 'quit'
 
-# Possible events in the subprocess.
+# events
+# # subprocess
 EVENT_START = 'start'
 EVENT_ERROR = 'error'
 EVENT_FRAME = 'frame'
 EVENT_INPUT = 'input'
 EVENT_PRINT = 'print'
 EVENT_QUIT = 'quit'
-
-# Possible events in controller.
+# # controller
 EVENT_REQUIRE_INPUT = 'require_input'
 
-# Traceable frame events.
-FRAME_EVENTS = {'call', 'line', 'exception', 'return'}
-
-# builtins and modules to disable
-DISABLE_BUILTINS = {'compile', 'exec', 'open'}
-ALLOWED_MODULES = {
-    'bisect', 'collections', 'copy', 'datetime', 'functools', 'hashlib', 'heapq', 'itertools', 'math', 'operator',
-    'random', 're', 'string', 'time', 'typing'
-}
-
-
-def disable_modules(modules, allow=False):
-    """
-    Disables the import of the received modules if allow is false, otherwise only the received methods are available,
-    modules already imported are available, current process only.
-    """
-    for module in sys.modules:
-        sys.modules[module] = \
-            sys.modules[module] if (allow and module in modules) or (not allow and module not in modules) else None
-
-
-def disable_builtins(builtins, globals_data):
-    """Disables the received builtins, backup builtins are available, current process only."""
-    for builtin in builtins:
-        if builtin in globals_data['__builtins__']:
-            globals_data['__builtins__'].pop(builtin)
-
-
-class Input:
-    """Redirects input as events over process connection queues."""
-
-    def __init__(self, main_to_sub_queue, sub_to_main_queue):
-        self.main_to_sub_queue = main_to_sub_queue
-        self.sub_to_main_queue = sub_to_main_queue
-
-    def __call__(self, prompt=''):
-        prompt = str(prompt)
-        self.sub_to_main_queue.put({'event': EVENT_INPUT, 'value': prompt})
-        return self.main_to_sub_queue.get()
-
-
-class Print:
-    """Redirects print as events over process connection queues."""
-
-    def __init__(self, main_to_sub_queue, sub_to_main_queue):
-        self.main_to_sub_queue = main_to_sub_queue
-        self.sub_to_main_queue = sub_to_main_queue
-
-    def __call__(self, *values, sep=None, end=None):
-        if sep is not None and type(sep) is not str:
-            raise TypeError(f'sep must be None or a string, not {type(end)}')
-        sep = sep if sep is not None else ' '
-        if end is not None and type(end) is not str:
-            raise TypeError(f'end must be None or a string, not {type(end)}')
-        end = end if end is not None else '\n'
-        values = values if len(values) > 0 else ('',)
-        text = reduce((lambda e0, e1: e0 + sep + e1), map((lambda e: str(e)), values)) + end
-        self.sub_to_main_queue.put({'event': EVENT_PRINT, 'value': text})
-
-
-class JSONStrEncoder(json.JSONEncoder):
-    """Json encoder that serializes non common objects as str(o)."""
-
-    def default(self, o):
-        return str(o)
-
-
-# the tracer script name
-SCRIPT_NAME = '<string>'
-
-
-# controller side
 
 class TracerController:
-    """Tracer controller class."""
+    """Tracer controller base class."""
 
-    STATE_CREATED = 'created'
-    STATE_RUNNING = 'running'
-    STATE_STOPPED = 'stopped'
+    class State(Enum):
+        CREATED = auto()
+        RUNNING = auto()
+        STOPPED = auto()
 
     def __init__(self, script):
         self.script = script
@@ -107,27 +40,27 @@ class TracerController:
         self.main_sub_io_queue = multiprocessing.Queue()
         self.sub_main_io_queue = multiprocessing.Queue()
         self.tracer_subprocess = multiprocessing.Process(
-            target=start_tracer_process,
+            target=TracerProcess.start_tracer_process,
             args=(self.script, self.main_sub_queue, self.sub_main_queue, self.main_sub_io_queue, self.sub_main_io_queue)
         )
-        self.state = TracerController.STATE_CREATED
+        self.state = TracerController.State.CREATED
         self.previous_event = EVENT_FRAME
         self.input_count = 0
 
     def start(self):
-        self.require_state(TracerController.STATE_CREATED)
+        self.require_state(TracerController.State.CREATED)
         self.tracer_subprocess.start()
         response = self.sub_main_queue.get()
         self.main_sub_queue.put(ACTION_NEXT)
         if response['event'] == EVENT_START:
-            self.state = TracerController.STATE_RUNNING
+            self.state = TracerController.State.RUNNING
         if response['event'] == EVENT_ERROR:
             self.stop()
         return response
 
     def stop(self):
-        self.require_state(TracerController.STATE_CREATED, TracerController.STATE_RUNNING)
-        if self.state == TracerController.STATE_RUNNING:
+        self.require_state(TracerController.State.CREATED, TracerController.State.RUNNING)
+        if self.state == TracerController.State.RUNNING:
             if self.previous_event in {EVENT_INPUT, EVENT_PRINT}:
                 self.sub_main_queue.get()
             self.main_sub_queue.put(ACTION_QUIT)
@@ -138,13 +71,11 @@ class TracerController:
         self.sub_main_io_queue.close()
         self.tracer_subprocess.terminate()
         self.tracer_subprocess.join()
-        self.state = TracerController.STATE_STOPPED
+        self.state = TracerController.State.STOPPED
 
     def next_response(self):
-        self.require_state(TracerController.STATE_RUNNING)
-        try:
-            self.check_input()
-        except:
+        self.require_state(TracerController.State.RUNNING)
+        if self.previous_event == EVENT_INPUT and self.input_count == 0:
             return {'event': EVENT_REQUIRE_INPUT}
         if self.previous_event == EVENT_FRAME:
             self.main_sub_queue.put(ACTION_NEXT)
@@ -163,23 +94,19 @@ class TracerController:
             self.input_count -= 1
         self.previous_event = response['event']
         if response['event'] == EVENT_ERROR or (response['event'] == EVENT_FRAME and response['value']['end']):
-            self.state = TracerController.STATE_STOPPED
+            self.state = TracerController.State.STOPPED
             self.tracer_subprocess.terminate()
             self.tracer_subprocess.join()
         return response
 
     def send_input(self, value):
-        self.require_state(TracerController.STATE_RUNNING)
+        self.require_state(TracerController.State.RUNNING)
         self.main_sub_io_queue.put(value)
         self.input_count += 1
 
     def require_state(self, *states):
         if self.state not in states:
             raise Exception('illegal state')
-
-    def check_input(self):
-        if self.previous_event == EVENT_INPUT and self.input_count == 0:
-            raise Exception('input required')
 
 
 class FilteredTracerController(TracerController):
@@ -188,9 +115,9 @@ class FilteredTracerController(TracerController):
     def next_response(self):
         while True:
             response = super().next_response()
-            if response['event'] in {EVENT_ERROR, EVENT_REQUIRE_INPUT, EVENT_INPUT, EVENT_PRINT} or \
-                    response['value']['event'] in {'line', 'exception'} or \
-                    self.state == TracerController.STATE_STOPPED:
+            if self.state == TracerController.State.STOPPED or \
+                    response['event'] in {EVENT_ERROR, EVENT_REQUIRE_INPUT, EVENT_INPUT, EVENT_PRINT} or \
+                    response['value']['event'] in {'line', 'exception'}:
                 return response
 
 
@@ -214,7 +141,7 @@ class StepTracerController(FilteredTracerController):
         while True:
             response = super().next_response()
             responses.append(response)
-            if self.state == TracerController.STATE_STOPPED or \
+            if self.state == TracerController.State.STOPPED or \
                     response['event'] in {EVENT_ERROR, EVENT_REQUIRE_INPUT} or \
                     (response['event'] == EVENT_INPUT and self.input_count == 0) or \
                     (response['event'] == EVENT_FRAME and response['value']['depth'] <= self.depth):
@@ -226,18 +153,63 @@ class StepTracerController(FilteredTracerController):
         while True:
             response = super().next_response()
             responses.append(response)
-            if self.state == TracerController.STATE_STOPPED or \
+            if self.state == TracerController.State.STOPPED or \
                     response['event'] in {EVENT_ERROR, EVENT_REQUIRE_INPUT} or \
                     (response['event'] == EVENT_FRAME and response['value']['depth'] < self.depth):
                 self.depth = response['value']['depth'] if response['event'] == EVENT_FRAME else self.depth
                 return responses
 
 
-def start_tracer_process(script, main_sub_queue, sub_main_queue, main_sub_io_queue, sub_main_io_queue):
-    TracerProcess(script, main_sub_queue, sub_main_queue, main_sub_io_queue, sub_main_io_queue)
-
-
 class TracerProcess:
+    """Tracer process."""
+
+    class Input:
+        """Redirects input as events over process connection queues."""
+
+        def __init__(self, main_to_sub_queue, sub_to_main_queue):
+            self.main_to_sub_queue = main_to_sub_queue
+            self.sub_to_main_queue = sub_to_main_queue
+
+        def __call__(self, prompt=''):
+            prompt = str(prompt)
+            self.sub_to_main_queue.put({'event': EVENT_INPUT, 'value': prompt})
+            return self.main_to_sub_queue.get()
+
+    class Print:
+        """Redirects print as events over process connection queues."""
+
+        def __init__(self, main_to_sub_queue, sub_to_main_queue):
+            self.main_to_sub_queue = main_to_sub_queue
+            self.sub_to_main_queue = sub_to_main_queue
+
+        def __call__(self, *values, sep=None, end=None):
+            if sep is not None and type(sep) is not str:
+                raise TypeError(f'sep must be None or a string, not {type(end)}')
+            sep = sep if sep is not None else ' '
+            if end is not None and type(end) is not str:
+                raise TypeError(f'end must be None or a string, not {type(end)}')
+            end = end if end is not None else '\n'
+            values = values if len(values) > 0 else ('',)
+            text = reduce((lambda e0, e1: e0 + sep + e1), map((lambda e: str(e)), values)) + end
+            self.sub_to_main_queue.put({'event': EVENT_PRINT, 'value': text})
+
+    class JSONStrEncoder(json.JSONEncoder):
+        """Json encoder that serializes non common objects as str(o)."""
+
+        def default(self, o):
+            return str(o)
+
+    @staticmethod
+    def allow_only_builtins(allow, glb_cpy):
+        glb_cpy['__builtins__'] = {name: bltn for name, bltn in glb_cpy['__builtins__'].items() if name in allow}
+
+    @staticmethod
+    def allow_only_modules(allow, sys_mod):
+        sys_mod.modules = {name: mod if name in allow else None for name, mod in sys_mod.modules.items()}
+
+    @staticmethod
+    def start_tracer_process(script, main_sub_queue, sub_main_queue, main_sub_io_queue, sub_main_io_queue):
+        TracerProcess(script, main_sub_queue, sub_main_queue, main_sub_io_queue, sub_main_io_queue)
 
     def __init__(self, script, main_sub_queue, sub_main_queue, main_sub_io_queue, sub_main_io_queue):
         self.script = script
@@ -251,19 +223,19 @@ class TracerProcess:
         self.start()
 
     def start(self):
-        sys.stdin = None
-        sys.stdout = None
-        sys.stderr = None
-        global_builtins = globals()['__builtins__']
-        script_builtins_dict = global_builtins if isinstance(global_builtins, dict) else vars(global_builtins)
         script_globals = {
             '__name__': '__main__', '__file__': '<string>', '__doc__': None, '__package__': None, '__loader__': None,
-            '__spec__': None, '__cached__': None, '__builtins__': script_builtins_dict.copy()
+            '__spec__': None, '__cached__': None, '__builtins__': vars(globals()['__builtins__']).copy()
         }
-        script_globals['__builtins__']['input'] = Input(self.main_sub_io_queue, self.sub_main_io_queue)
-        script_globals['__builtins__']['print'] = Print(self.main_sub_io_queue, self.sub_main_io_queue)
-        disable_modules(ALLOWED_MODULES, True)
-        disable_builtins(DISABLE_BUILTINS, script_globals)
+        allowed_builtins = {name for name in dir(globals()['__builtins__']) if name not in {'compile', 'exec', 'open'}}
+        allowed_modules = {
+            'bisect', 'collections', 'copy', 'datetime', 'functools', 'hashlib', 'heapq', 'itertools', 'math',
+            'operator', 'random', 're', 'string', 'time', 'typing'
+        }
+        script_globals['__builtins__']['input'] = TracerProcess.Input(self.main_sub_io_queue, self.sub_main_io_queue)
+        script_globals['__builtins__']['print'] = TracerProcess.Print(self.main_sub_io_queue, self.sub_main_io_queue)
+        TracerProcess.allow_only_builtins(allowed_builtins, script_globals)
+        TracerProcess.allow_only_modules(allowed_modules, sys)
         try:
             compiled = compile(self.script, SCRIPT_NAME, 'exec')
             self.sub_main_queue.put({'event': EVENT_START})
@@ -284,7 +256,7 @@ class TracerProcess:
     def trace_dispatch(self, frame, event, args):
         if self.quit:
             return None
-        if frame.f_code.co_filename != SCRIPT_NAME or event not in FRAME_EVENTS:
+        if frame.f_code.co_filename != SCRIPT_NAME or event not in {'call', 'line', 'exception', 'return'}:
             return self.trace_dispatch
         action = self.main_sub_queue.get()
         if action == ACTION_NEXT:
@@ -305,7 +277,7 @@ class TracerProcess:
         end = event == 'return' and depth <= 1
         return {
             'event': event, 'line': line, 'text': text, 'stack': stack, 'depth': depth, 'args': args, 'end': end,
-            'locals': json.dumps(self.build_locals_graph(frame), cls=JSONStrEncoder)
+            'locals': json.dumps(self.build_locals_graph(frame), cls=TracerProcess.JSONStrEncoder)
         }
 
     def get_stack(self, frame):
@@ -333,7 +305,7 @@ class TracerProcess:
         if isinstance(obj, (bool, int, float, type(None))):
             return obj
         if isinstance(obj, str):
-            return f'"{obj}'
+            return f'\'{obj}\''
         ref = str(id(obj))
         if ref in objects:
             return ref,
