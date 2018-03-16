@@ -31,11 +31,9 @@ class Heap extends React.Component {
             ? JSON.parse(debug.responses.slice(-1)[0].value.locals)
             : this.state.lastLocals
 
-        console.log(this.state.lastLocals)
         let objData = Object.values(this.state.lastLocals.objects)
             .map(
                 obj => {
-                    console.log(obj)
                     return <Draggable bounds="parent">
                         <div className="border p-2 btn-primary" style={{ display: "inline-block" }}>
                             <h5>{obj.type}</h5>
@@ -47,7 +45,6 @@ class Heap extends React.Component {
                     </Draggable>
                 }
             )
-        console.log(objData)
 
         return <div className='border' style={{ height: '90%', width: '100%', position: 'relative', overflow: 'auto' }}>
             <div style={{ height: '1000px', width: '1000px', padding: '10px' }}>

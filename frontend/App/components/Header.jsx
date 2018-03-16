@@ -2,7 +2,7 @@ import React from 'react'
 import { connect } from 'react-redux'
 
 import { fetchExercises, selectExercise } from '../reducers/exercise'
-import { fetchUser, logoutUser } from '../reducers/user'
+import { fetchUser, fetchLoginAddress, logoutUser } from '../reducers/user'
 
 
 @connect(state => ({ exercise: state.exercise, user: state.user }))
@@ -14,6 +14,7 @@ export default class Header extends React.Component {
         if (!exercise.isFetching && exercise.exercises.length === 0 && exercise.err === undefined)
             dispatch(fetchExercises())
         if (!user.isFetching) dispatch(fetchUser())
+        dispatch(fetchLoginAddress())
     }
 
     render() {
@@ -54,7 +55,7 @@ export default class Header extends React.Component {
             return <a className='dropdown-item' href='#'>
                 Loading...
             </a>
-        if (exercise.exercises === null)
+        if (!exercise.exercises)
             return <a className='dropdown-item' href='#'>
                 Failed to load
             </a>
@@ -63,12 +64,12 @@ export default class Header extends React.Component {
                 No exercises found
             </a>
         return exercise.exercises.map((exercise, i) =>
-            <a className='dropdown-item' href='#' onClick={() => dispatch(selectExercise(exercise))}>
+            <a className='dropdown-item' href='#' onClick={() => dispatch(selectExercise(exercise.id))}>
                 {exercise.name}
             </a>
         )
     }
-    
+
     renderUserOptions() {
         let { dispatch, user } = this.props
 
@@ -76,9 +77,9 @@ export default class Header extends React.Component {
             return <li className='nav-item'>
                 Loading
             </li>
-        if (user.id === null)
+        if (!user.id)
             return <li className='nav-item active'>
-                <a className='nav-link' href={'auth/login/google-oauth2'}>
+                <a className='nav-link' href={user.link ? user.link : '#'}>
                     Log in
                 </a>
             </li>

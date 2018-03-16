@@ -1,6 +1,7 @@
 import { execute_fetch } from './util/util'
 
 const initialState = {
+    link: null,
     isFetching: false,
     id: null,
     username: null,
@@ -11,14 +12,18 @@ const initialState = {
 export default function reduce(state = initialState, action = {}) {
     switch (action.type) {
         case USER_FETCH:
-            return { ...initialState, isFetching: true }
+            return { ...initialState, link: state.link, isFetching: true }
         case USER_FETCH_SUCCESS:
-            return { ...initialState, ...action.json, isFetching: false }
+            return { ...initialState, ...action.json, link: state.link, isFetching: false }
+        case USER_LOGIN_ADDRESS_FETCH_SUCCESS:
+            return { ...state, ...action.json }
         case USER_FETCH_ERROR:
         case USER_LOGOUT:
         case USER_LOGOUT_SUCCESS:
         case USER_LOGOUT_ERROR:
-            return { ...initialState }
+            return { ...initialState, link: state.link }
+        case USER_LOGIN_ADDRESS_FETCH:
+        case USER_LOGIN_ADDRESS_FETCH_ERROR:
         default:
             return state
     }
@@ -28,6 +33,9 @@ export default function reduce(state = initialState, action = {}) {
 const USER_FETCH = 'USER_FETCH'
 const USER_FETCH_SUCCESS = 'USER_FETCH_SUCCESS'
 const USER_FETCH_ERROR = 'USER_FETCH_ERROR'
+const USER_LOGIN_ADDRESS_FETCH = 'USER_LOGIN_ADDRESS_FETCH'
+const USER_LOGIN_ADDRESS_FETCH_SUCCESS = 'USER_LOGIN_ADDRESS_FETCH_SUCCESS'
+const USER_LOGIN_ADDRESS_FETCH_ERROR = 'USER_LOGIN_ADDRESS_FETCH_ERROR'
 const USER_LOGOUT = 'USER_LOGOUT'
 const USER_LOGOUT_SUCCESS = 'USER_LOGOUT_SUCCESS'
 const USER_LOGOUT_ERROR = 'USER_LOGOUT_ERROR'
@@ -37,10 +45,22 @@ export function fetchUser() {
     return dispatch => {
         dispatch({ type: USER_FETCH })
         return execute_fetch({
-            url: '/current_user/', method: 'post', body: { option: 'info' },
+            url: '/user/', method: 'post', body: { option: 'info' },
             on2XX: json => dispatch({ type: USER_FETCH_SUCCESS, json: json }),
             onNot2XX: json => dispatch({ type: USER_FETCH_ERROR, json: json }),
             onErr: err => dispatch({ type: USER_FETCH_ERROR })
+        })
+    }
+}
+
+export function fetchLoginAddress() {
+    return dispatch => {
+        dispatch({ type: USER_LOGIN_ADDRESS_FETCH })
+        return execute_fetch({
+            url: '/user/', method: 'post', body: { option: 'login' },
+            on2XX: json => dispatch({ type: USER_LOGIN_ADDRESS_FETCH_SUCCESS, json: json }),
+            onNot2XX: json => dispatch({ type: USER_LOGIN_ADDRESS_FETCH_ERROR, json: json }),
+            onErr: err => dispatch({ type: USER_LOGIN_ADDRESS_FETCH_ERROR })
         })
     }
 }
@@ -49,7 +69,7 @@ export function logoutUser() {
     return dispatch => {
         dispatch({ type: USER_LOGOUT })
         return execute_fetch({
-            url: '/current_user/', method: 'post', body: { option: 'logout' },
+            url: '/user/', method: 'post', body: { option: 'logout' },
             on2XX: json => dispatch({ type: USER_LOGOUT_SUCCESS, json: json }),
             onNot2XX: json => dispatch({ type: USER_LOGOUT_ERROR, json: json }),
             onErr: err => dispatch({ type: USER_LOGOUT_ERROR })
