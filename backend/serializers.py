@@ -16,9 +16,20 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
         model = Group
         fields = ('name')
 
-#
 
 class ExerciseSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Exercise
         fields = '__all__'
+
+
+class ExerciseIdNameSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Exercise
+        fields = ('id', 'name')
+
+
+class ExercisePublicDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Exercise
+        fields = ('id', 'name', 'readme', 'input_ex')

@@ -1,20 +1,46 @@
 from django.contrib.auth import logout
 from django.contrib.auth.models import Group, User
+from django.contrib.sites.shortcuts import get_current_site
 from rest_framework import permissions, response, status, views, viewsets
 
 from backend import models, serializers
 from backend.tracer import tracer
 
 
-# extra permissions
+class UserViewSet(viewsets.ModelViewSet):
+    permission_classes = permissions.IsAdminUser,
+    queryset = User.objects.all().order_by('-date_joined')
+    serializer_class = serializers.UserSerializer
+
+
+class GroupViewSet(viewsets.ModelViewSet):
+    permission_classes = permissions.IsAdminUser,
+    queryset = Group.objects.all()
+    serializer_class = serializers.GroupSerializer
+
+
+class ExerciseViewSet(viewsets.ModelViewSet):
+    permission_classes = permissions.IsAdminUser,
+    queryset = models.Exercise.objects.all()
+    serializer_class = serializers.ExerciseSerializer
+
 
 class IsReadonly(permissions.BasePermission):
-
     def has_permission(self, request, view):
         return request.method in permissions.SAFE_METHODS or request.user and request.user.is_staff
 
 
-# util functions
+class ExerciseIdNameViewSet(viewsets.ModelViewSet):
+    permission_classes = IsReadonly,
+    queryset = models.Exercise.objects.all()
+    serializer_class = serializers.ExerciseIdNameSerializer
+
+
+class ExercisePublicDataViewSet(viewsets.ModelViewSet):
+    permission_classes = IsReadonly,
+    queryset = models.Exercise.objects.all()
+    serializer_class = serializers.ExercisePublicDataSerializer
+
 
 def require_option(request, option_name):
     option = request.data.get(option_name)
@@ -26,38 +52,13 @@ def require_option(request, option_name):
 
 def option_not_supported(option, options):
     return response.Response(
-        {'detail': f'option {option} not supported, options available are {[*options]}'}, status.HTTP_400_BAD_REQUEST
+        {'detail': f'option {option} not supported, available options: {[*options]}'}, status.HTTP_400_BAD_REQUEST
     )
 
 
-# view sets
+class UserAPIView(views.APIView):
 
-class UserViewSet(viewsets.ModelViewSet):
-
-    permission_classes = (permissions.IsAdminUser,)
-    queryset = User.objects.all().order_by('-date_joined')
-    serializer_class = serializers.UserSerializer
-
-
-class GroupViewSet(viewsets.ModelViewSet):
-
-    permission_classes = (permissions.IsAdminUser,)
-    queryset = Group.objects.all()
-    serializer_class = serializers.GroupSerializer
-
-
-class ExerciseViewSet(viewsets.ModelViewSet):
-
-    permission_classes = (IsReadonly,)
-    queryset = models.Exercise.objects.all()
-    serializer_class = serializers.ExerciseSerializer
-
-
-# api views
-
-class CurrentUserAPIView(views.APIView):
-
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = permissions.AllowAny,
 
     def post(self, request):
         option, error_response = require_option(request, 'option')
@@ -65,23 +66,31 @@ class CurrentUserAPIView(views.APIView):
             return error_response
         options = {
             'info': self.info,
+            'login': self.login,
             'logout': self.logout
         }
         action = options.get(option, lambda req: option_not_supported(option, options))
         return action(request)
 
     def info(self, request):
-        serializer = serializers.UserSerializer(User.objects.get(id=request.user.id))
-        return response.Response({'detail': 'info', **serializer.data})
+        if request.user and request.user.is_authenticated:
+            serializer = serializers.UserSerializer(User.objects.get(id=request.user.id))
+            return response.Response({'detail': 'user data', **serializer.data})
+        return response.Response({'detail': 'not authenticated'})
+
+    def login(self, request):
+        return response.Response({'detail': 'login', 'link': '/auth/login/google-oauth2'})
 
     def logout(self, request):
-        logout(request)
-        return response.Response({'detail': 'logout'})
+        if request.user and request.user.is_authenticated:
+            logout(request)
+            return response.Response({'detail': 'logout successful'})
+        return response.Response({'detail': 'not authenticated'})
 
 
 class TracerAPIView(views.APIView):
 
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = permissions.IsAuthenticated,
     user_tracers = {}
 
     def post(self, request):
@@ -102,7 +111,7 @@ class TracerAPIView(views.APIView):
     def require_tracer(self, request):
         user_tracer = TracerAPIView.user_tracers.get(request.user.id)
         error_response = None if user_tracer is not None else response.Response(
-            {'detail': 'missing tracer'}, status=status.HTTP_400_BAD_REQUEST
+            {'detail': 'tracer not started'}, status=status.HTTP_400_BAD_REQUEST
         )
         return user_tracer, error_response
 
