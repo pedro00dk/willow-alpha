@@ -1,4 +1,3 @@
-import classNames from 'classnames'
 import React from 'react'
 import { connect } from 'react-redux'
 
@@ -26,16 +25,13 @@ export default class ScriptEditor extends React.Component {
         }
 
         return <TextEditor
-            editor={{
-                mode: 'python',
-                value: script.script,
-                readOnly: !script.editable,
-                ...this.props.editor
-            }}
+            value={script.script}
+            mode={'python'}
+            readOnly={!script.editable}
             onChange={onChange}
             onUpdate={onUpdate}
             markers={script.markers.map(line => ({
-                ln: line, cls: classNames({ 'bg-info': !script.error, 'bg-danger': script.error }, 'position-absolute')
+                ln: line, cls: 'position-absolute ' + !script.error ? 'bg-info' : 'bg-danger'
             }))}
         />
     }

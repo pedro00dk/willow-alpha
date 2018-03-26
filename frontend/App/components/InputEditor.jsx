@@ -1,4 +1,3 @@
-import classNames from 'classnames'
 import React from 'react'
 import { connect } from 'react-redux'
 
@@ -29,28 +28,27 @@ export default class InputEditor extends React.Component {
                 }
             }
         }
+
         let onChange = (change, editor) => {
             let { dispatch } = this.props
 
             dispatch(setInput(editor.session.getLines(0, editor.session.getLength() - 2), editor.session.getValue()))
         }
+
         let onUpdate = editor => {
             let { input } = this.props
 
             if (input.readLines > 0) editor.scrollToLine(input.readLines - 1, true, false, () => { })
         }
+
         return <TextEditor
-            editor={{
-                mode: 'text',
-                value: input.inputText,
-                showGutter: false,
-                ...this.props.editor
-            }}
+            value={input.inputText}
+            gutter={false}
             onExec={onExec}
             onChange={onChange}
             onUpdate={onUpdate}
             markers={Array(input.readLines).fill().map(
-                (_, i) => ({ ln: i, cls: classNames('bg-info', 'position-absolute') })
+                (_, i) => ({ ln: i, cls: 'bg-info position-absolute' })
             )}
         />
     }

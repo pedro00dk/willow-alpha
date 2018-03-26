@@ -20,13 +20,9 @@ export default class OutputEditor extends React.Component {
         }
 
         return <TextEditor
-            editor={{
-                mode: 'text',
-                value: output.output,
-                readOnly: true,
-                showGutter: false,
-                ...this.props.editor
-            }}
+            value={output.output}
+            readOnly={true}
+            gutter={false}
             onChange={onChange}
         />
     }
