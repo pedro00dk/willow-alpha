@@ -54,7 +54,6 @@ export default class TextEditor extends React.Component {
         this.editor.renderer.setShowGutter(gutter)
         this.editor.setReadOnly(readOnly)
         this.editor.$blockScrolling = Infinity
-        this.editor.navigateFileEnd()
 
         if (onUpdate) onUpdate(this.editor)
         if (markers) {
@@ -72,6 +71,6 @@ export default class TextEditor extends React.Component {
     }
 
     render() {
-        return <div style={{ width: '100%', height: '300px' }} ref={ref => this.ref = ref} />
+        return <div style={{ width: '100%', height: '100%' }} ref={ref => this.ref = ref} />
     }
 }

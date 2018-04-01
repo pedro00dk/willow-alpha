@@ -1,5 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
+import SplitPane from 'react-split-pane'
 
 import DebugBar from '../components/DebugBar'
 import Header from '../components/Header'
@@ -14,6 +15,41 @@ import TextEditor from '../components/TextEditor'
 export default class AppContainer extends React.Component {
 
     render() {
+        return <div className='container-fluid p-0'>
+            <Header style={{ height: '3em' }} />
+            <div className='row mx-0' style={{ height: '3em' }}>
+                <div className='col-12'>
+                    <DebugBar />
+                </div>
+            </div>
+            <div className='row mx-0' style={{ height: '24em' }}>
+                <div className='col-5'>
+                    <div className='w-100 h-100 border'>
+                        <ScriptEditor />
+                    </div>
+                </div>
+                <div className='col-7'>
+                    <div className='w-100 h-100 border'>
+                        <Inspector />
+                    </div>
+                </div>
+            </div>
+            <div className='row mx-0' style={{ height: '10em' }}>
+                <div className='col-5'>
+                    <span className='ml-3 h6 text-dark'>Input</span>
+                    <div className='w-100 h-100 border'>
+                        <InputEditor />
+                    </div>
+                </div>
+                <div className='col-7'>
+                    <span className='ml-3 h6 text-dark'>Output</span>
+                    <div className='w-100 h-100 border'>
+                        <OutputEditor />
+                    </div>
+                </div>
+            </div>
+        </div >
+
         let { exercise } = this.props
 
         let contentEditorStyle = { width: '100%', height: '30em' }
@@ -59,30 +95,45 @@ export default class AppContainer extends React.Component {
             <div className='row m-0'>
                 <DebugBar style={{ height: '3em' }} />
             </div>
-            <div className='row m-0'>
-                <div className='col-5 border border-light p-0'>
-                    <nav>
-                        <div className='nav nav-tabs bg-light' id='nav-tab' role='tablist'>
-                            {tabs}
-                        </div>
-                    </nav>
-                    <div className='tab-content bg-light' id='nav-tabContent'>
-                        {contents}
-                    </div>
-
-                </div>
-                <div className='col-7 border border-light p-0' style={{height: '30em'}}>
-                    <Inspector />
-                </div>
-            </div>
-            <div className='row m-0'>
-                <div className='col-6 border border-light p-0'>
-                    <InputEditor editor={{ style: { width: '100%', height: '15em' } }} />
-                </div>
-                <div className='col-6 border border-light p-0'>
-                    <OutputEditor editor={{ style: { width: '100%', height: '15em' } }} />
-                </div>
-            </div>
+            <SplitPane split={'horizontal'}
+                minSize={250} maxSize={-250} defaultSize={window.innerHeight * (3 / 4)}
+                resizerClassName={'bg-secondary p-1'}
+            >
+                {this.renderScriptEditorInspector()}
+                {this.renderInputOutputEditors()}
+            </SplitPane>
         </div>
+    }
+
+    setScriptEditorIspectorSize(size) {
+        this.setState({ scriptEditorSize: { width: size + 'px', height: window.innerHeight + 'px' } })
+
+    }
+
+    renderScriptEditorInspector() {
+        return <SplitPane
+            minSize={250} maxSize={-250} defaultSize={window.innerWidth * (5 / 12)}
+            resizerClassName={'bg-secondary p-1'}
+            onChange={size => this.setScriptEditorIspectorSize(size)}
+        >
+            <ScriptEditor editor={{ ...this.state.scriptEditorSize }} />
+            <div></div>
+        </SplitPane>
+        //<Inspector editor={{ ...this.state.outputEditorSize }} />
+    }
+
+    setInputOutputSize(size) {
+        this.setState({ inputEditorSize: { width: '100%', height: '100%' } })
+        //this.setState({ outputEditorSize: { width: (window.innerWidth - size) + 'px', height: window.innerHeight + 'px' } })
+    }
+
+    renderInputOutputEditors() {
+        return <SplitPane
+            minSize={250} maxSize={-250} defaultSize={window.innerWidth / 2}
+            resizerClassName={'bg-secondary p-1'}
+            onChange={size => this.forceUpdate()}
+        >
+
+        </SplitPane>
     }
 }
