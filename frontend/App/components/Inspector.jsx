@@ -11,7 +11,7 @@ export default class Inspector extends React.Component {
     }
 
     render() {
-        return <div><Heap /></div>
+        return null//<div><Heap /></div>
     }
 }
 
