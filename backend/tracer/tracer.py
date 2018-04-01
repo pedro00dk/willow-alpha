@@ -225,11 +225,13 @@ class TracerProcess:
         self.start()
 
     def start(self):
+        globals_builtins = globals()['__builtins__']
         script_globals = {
             '__name__': '__main__', '__file__': '<string>', '__doc__': None, '__package__': None, '__loader__': None,
-            '__spec__': None, '__cached__': None, '__builtins__': vars(globals()['__builtins__']).copy()
+            '__spec__': None, '__cached__': None,
+            '__builtins__': globals_builtins.copy() if type(globals_builtins) == dict else vars(globals_builtins).copy()
         }
-        allowed_builtins = {name for name in dir(globals()['__builtins__']) if name not in {'compile', 'exec', 'open'}}
+        allowed_builtins = {name for name in script_globals['__builtins__'] if name not in {'compile', 'exec', 'open'}}
         allowed_modules = {
             'bisect', 'collections', 'copy', 'datetime', 'functools', 'hashlib', 'heapq', 'itertools', 'math',
             'operator', 'random', 're', 'string', 'time', 'typing'
