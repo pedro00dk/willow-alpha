@@ -4,18 +4,55 @@ import { connect } from 'react-redux'
 import Draggable from 'react-draggable'
 import { SortableContainer, SortableElement, arrayMove } from 'react-sortable-hoc'
 
+@connect(state => ({ debug: state.debug }))
 export default class Inspector extends React.Component {
 
-    constructor(props) {
-        super(props)
+    render() {
+        return <div className='w-100 h-100'>
+            <div className='w-25 h-100 border' style={{ overflow: 'auto' }}>
+                {this.renderStack()}
+            </div>
+        </div>
     }
 
-    render() {
-        return null//<div><Heap /></div>
+    renderStack() {
+        let { debug } = this.props
+
+        let frameResponses = debug.responses.filter(response => response.event === 'frame')
+        if (frameResponses.length === 0)
+            return <table className='table table-sm table-hover table-striped'>
+                <thead className='thead-light'>
+                    <tr>
+                        <th scope='col'>frame</th>
+                        <th scope='col'>value</th>
+                    </tr>
+                </thead>
+            </table>
+
+        let lastFrame = frameResponses.slice(-1)[0]
+        return lastFrame.value.locals.stack.map(
+            ({ name, variables }) => <table className='table table-sm table-hover table-striped'>
+                <thead className='thead-light'>
+                    <tr>
+                        <th scope='col'>{name.substring(0, 8)}</th>
+                        <th scope='col'>value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {
+                        Object.keys(variables).map(
+                            name => <tr>
+                                <th scope='col'>{name}</th>
+                                <th scope='col'>{variables[name]}</th>
+                            </tr>)
+                    }
+                </tbody>
+            </table>
+        )
     }
 }
 
-@connect(state => ({ debug: state.debug }))
+
 class Heap extends React.Component {
 
     constructor(props) {
@@ -46,31 +83,14 @@ class Heap extends React.Component {
                 }
             )
 
-        return <div className='border' style={{ height: '90%', width: '100%', position: 'relative', overflow: 'auto' }}>
-            <div style={{ height: '1000px', width: '1000px', padding: '10px' }}>
+        return <div className='w-100 h-100' style={{ overflow: 'auto' }}>
+            <div className='p-1' style={{ height: '1000px', width: '1000px' }}>
                 {objData}
-                <Draggable bounds="parent">
-                    <div className="border" display="inline-block">
-                        I can only be moved within my offsetParent
-                    </div>
-                </Draggable>
             </div>
         </div>
     }
 }
 
-
-const SortableItem = SortableElement(({ value }) => <li>{value}</li>)
-
-const SortableList = SortableContainer(({ items }) => {
-    return (
-        <ul>
-            {items.map((value, index) => (
-                <SortableItem key={`item-${index}`} index={index} value={value} />
-            ))}
-        </ul>
-    );
-});
 
 
 
@@ -84,7 +104,6 @@ class Stack extends React.Component {
     }
 
     render() {
-
         return <SortableList items={this.state.items} onSortEnd={(o, n) => this.setState({ items: arrayMove(this.state.items, o, n) })} />
     }
 }
