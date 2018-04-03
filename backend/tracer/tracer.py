@@ -276,38 +276,46 @@ class TracerProcess:
         self.frame_count += 1
         line = frame.f_lineno - 1
         text = self.script_lines[line]
-        stack, depth = self.get_stack(frame)
+        frames, stack, depth = self.get_stack(frame)
         args = {'type': str(args[0]), 'value': args[1].args, 'tb': traceback.format_exception(*args)} \
             if event == 'exception' else args
         kill = None
         if self.frame_count >= self.frame_count_limit:
             kill = f'frame_count reached frame_count_limit ({self.frame_count_limit})'
         end = event == 'return' and depth <= 1 or kill is not None
+
         return {
             'event': event, 'line': line, 'text': text, 'stack': stack, 'depth': depth, 'args': args, 'kill': kill,
-            'end': end, 'locals': json.dumps(self.build_locals_graph(frame), cls=TracerProcess.JSONStrEncoder)
+            'end': end, 'locals': json.dumps(self.build_object_graph(frames), cls=TracerProcess.JSONStrEncoder)
         }
 
     def get_stack(self, frame):
+        frames = []
         stack = []
         while frame != self.exec_frame:
             if frame.f_code.co_filename != SCRIPT_NAME:
                 frame = frame.f_back
                 continue
+            frames.append(frame)
             line = frame.f_lineno - 1
             text = self.script_lines[line]
             stack.append({'line': line, 'text': text})
             frame = frame.f_back
         depth = max(0, len(stack))
-        return stack, depth
+        return frames, stack, depth
 
-    def build_locals_graph(self, frame):
-        frame_locals = frame.f_locals
+    def build_object_graph(self, frames):
         objects = {}
         user_classes = set()
-        variables = {name: self.walk_object(frame_locals[name], objects, user_classes)
-                     for name, value in frame_locals.items() if not name.startswith('__') and not name.endswith('__')}
-        return {'objects': objects, 'variables': variables}
+        frames_variables = []
+        for frame in frames:
+            frame_locals = frame.f_locals
+            frame_name = frame.f_code.co_name
+            variables = {name: self.walk_object(frame_locals[name], objects, user_classes)
+                         for name, value in frame_locals.items()
+                         if not name.startswith('__') and not name.endswith('__')}
+            frames_variables.append({'name': frame_name, 'variables': variables})
+        return {'objects': objects, 'stack': frames_variables}
 
     def walk_object(self, obj, objects, user_classes):
         if isinstance(obj, (bool, int, float, type(None))):
@@ -338,7 +346,6 @@ class TracerProcess:
 
 def main():
     pass
-
 
 if __name__ == '__main__':
     main()
