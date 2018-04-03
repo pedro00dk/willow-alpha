@@ -144,7 +144,7 @@ export default class DebugBar extends React.Component {
                 dispatch(updateOutput(
                     response.value.tb
                         .filter((line, i) => i !== 1)
-                        .join()
+                        .join('')
                 ))
                 this.stop()
             } else if (response.event === 'frame') {
@@ -154,10 +154,14 @@ export default class DebugBar extends React.Component {
                         type: response.value.event === 'exception' ? 'error' : undefined
                     }]
                 ))
-                this.raisedException = response.value.event === 'exception' ? response.value.args : null
+                this.raisedException = response.value.event === 'exception'
+                    ? response.value.args
+                    : response.value.event === 'return'
+                        ? this.raisedException
+                        : null
                 if (response.value.end) {
                     if (this.raisedException !== null) {
-                        dispatch(updateOutput(this.raisedException.tb.join()))
+                        dispatch(updateOutput(this.raisedException.tb.join('')))
                     }
                     this.stop()
                 }
@@ -175,11 +179,11 @@ export default class DebugBar extends React.Component {
             }
         })
     }
-    
+
     shouldComponentUpdate(nextProps, nextState, nextContext) {
         return this.props.debug !== nextProps.debug
     }
-    
+
     render() {
         return <div className='w-100 h-100'>
             <img src={playBtn} className='h-100'
