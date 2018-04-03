@@ -279,14 +279,12 @@ class TracerProcess:
         frames, stack, depth = self.get_stack(frame)
         args = {'type': str(args[0]), 'value': args[1].args, 'tb': traceback.format_exception(*args)} \
             if event == 'exception' else args
-        kill = None
-        if self.frame_count >= self.frame_count_limit:
-            kill = f'frame_count reached frame_count_limit ({self.frame_count_limit})'
+        frames_locals = self.build_object_graph(frames)
+        kill = f'frame_count_limit ({self.frame_count_limit})' if self.frame_count >= self.frame_count_limit else None
         end = event == 'return' and depth <= 1 or kill is not None
-
         return {
-            'event': event, 'line': line, 'text': text, 'stack': stack, 'depth': depth, 'args': args, 'kill': kill,
-            'end': end, 'locals': json.dumps(self.build_object_graph(frames), cls=TracerProcess.JSONStrEncoder)
+            'event': event, 'line': line, 'text': text, 'stack': stack, 'depth': depth, 'locals': frames_locals,
+            'args': args, 'kill': kill, 'end': end,
         }
 
     def get_stack(self, frame):
