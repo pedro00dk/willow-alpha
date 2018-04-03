@@ -28,62 +28,101 @@ export default class DebugBar extends React.Component {
         super(props)
 
         this.state = {
-            processedResponses: 0,
-            savedException: null
+            message: '',
+            inToOut: true
         }
 
+        this.currentResponse = 0
+        this.raisedException = null
+
         // binds
-        this.resetState = this.resetState.bind(this)
+        this.isPlayAvailable = this.isPlayAvailable.bind(this)
+        this.isRestartOrStopAvailable = this.isRestartOrStopAvailable.bind(this)
+        this.isStepAvailable = this.isStepAvailable.bind(this)
         this.play = this.play.bind(this)
+        this.restart = this.restart.bind(this)
         this.stop = this.stop.bind(this)
         this.stepInto = this.stepInto.bind(this)
         this.stepOver = this.stepOver.bind(this)
         this.stepOut = this.stepOut.bind(this)
     }
 
-    resetState() {
-        this.state = {
-            processedResponses: 0,
-            savedException: null
-        }
+    isPlayAvailable() {
+        let { debug } = this.props
+
+        return !debug.isFetching
+    }
+
+    isRestartOrStopAvailable() {
+        let { debug } = this.props
+
+        return debug.isDebugging
+    }
+
+    isStepAvailable() {
+        let { debug } = this.props
+
+        return debug.isDebugging && !debug.isFetching
     }
 
     play() {
-        let { dispatch, script } = this.props
+        if (!this.isPlayAvailable()) return
+        let { dispatch, debug, script } = this.props
 
-        this.resetState()
+        if (!debug.isDebugging) {
+            dispatch(setEditable(false))
+            dispatch(setMarkers([]))
+            dispatch(setReadLines(0))
+            dispatch(setOutput(''))
+            dispatch(startDebug(script.script))
+            this.currentResponse = 0
+            this.raisedException = null
+        } else {
+            // TODO continue
+        }
+    }
+
+    restart() {
+        if (!this.isRestartOrStopAvailable()) return
+        let { dispatch, debug, script } = this.props
+
         dispatch(setEditable(false))
         dispatch(setMarkers([]))
         dispatch(setReadLines(0))
         dispatch(setOutput(''))
-
         dispatch(startDebug(script.script))
+        this.currentResponse = 0
+        this.raisedException = null
     }
 
     stop() {
+        if (!this.isRestartOrStopAvailable()) return
         let { dispatch, debug } = this.props
 
-        this.resetState()
         dispatch(setEditable(true))
         dispatch(setMarkers([]))
         dispatch(setReadLines(0))
-
         dispatch(stopDebug())
+        this.currentResponse = 0
+        this.raisedException = null
     }
 
     stepInto() {
+        if (!this.isStepAvailable()) return
         let { dispatch } = this.props
 
         dispatch(stepInto())
     }
 
     stepOver() {
+        if (!this.isStepAvailable()) return
         let { dispatch } = this.props
 
         dispatch(stepOver())
     }
 
     stepOut() {
+        if (!this.isStepAvailable()) return
         let { dispatch } = this.props
 
         dispatch(stepOut())
@@ -91,90 +130,76 @@ export default class DebugBar extends React.Component {
 
     componentDidUpdate() {
         let { dispatch, debug, input, output, script } = this.props
+
         if (!debug.isDebugging) return
-        let responsesToProcess = this.state.processedResponses - debug.responses.length !== 0
-            ? debug.responses.slice(this.state.processedResponses - debug.responses.length) : []
-        if (responsesToProcess.length === 0) return
-        this.state.processedResponses = debug.responses.length
-        responsesToProcess.forEach(response => {
-            if (response.event === 'start') {
-                this.stepInto()
-            } else if (response.event === 'error') {
-                dispatch(updateOutput(response.value.tb
-                    .filter((line, i) => i !== 1)
-                    .reduce((str1, str2) => str1 + str2)
+
+        let nextResponsesCount = debug.responses.length - this.currentResponse
+        if (nextResponsesCount === 0) return
+        let nextResponses = debug.responses.slice(-nextResponsesCount)
+        this.currentResponse = debug.responses.length
+
+        nextResponses.forEach(response => {
+            if (response.event === 'start') this.stepInto()
+            else if (response.event === 'error') {
+                dispatch(updateOutput(
+                    response.value.tb
+                        .filter((line, i) => i !== 1)
+                        .join()
                 ))
                 this.stop()
             } else if (response.event === 'frame') {
-                dispatch(setMarkers([response.value.line]))
+                dispatch(setMarkers(
+                    [{
+                        line: response.value.line,
+                        type: response.value.event === 'exception' ? 'error' : undefined
+                    }]
+                ))
+                this.raisedException = response.value.event === 'exception' ? response.value.args : null
                 if (response.value.end) {
-                    if (this.state.savedException !== null) {
-                        dispatch(setMarkers([response.value.line], true))
-                        dispatch(updateOutput(this.state.savedException.tb.reduce((str1, str2) => str1 + str2)))
+                    if (this.raisedException !== null) {
+                        dispatch(updateOutput(this.raisedException.tb.join()))
                     }
                     this.stop()
                 }
-                if (response.value.event === 'exception') {
-                    this.state.savedException = response.value.event === 'exception' ? response.value.args : null
-                    dispatch(setMarkers([response.value.line], true))
-                }
-
             } else if (response.event === 'input' || response.event === 'require_input') {
-                if (response.event === 'input') {
-                    dispatch(updateOutput(response.value))
-                }
+                if (response.event === 'input') dispatch(updateOutput(response.value))
                 if (input.input.length > input.readLines) {
                     let inputLine = input.input[input.input.length - 1]
                     dispatch(sendInput(inputLine))
                     dispatch(setReadLines(input.readLines + 1))
-                    dispatch(updateOutput(inputLine + '\n'))
-                }
+                    //dispatch(updateOutput(inputLine + '\n'))
+                } else dispatch(setMarkers([{ line: script.markers.slice(-1)[0].line, type: 'warn' }]))
             } else if (response.event === 'print') {
+                dispatch(setMarkers([{ line: script.markers.slice(-1)[0].line }]))
                 dispatch(updateOutput(response.value))
             }
-        });
-
+        })
     }
-
+    
     shouldComponentUpdate(nextProps, nextState, nextContext) {
         return this.props.debug !== nextProps.debug
     }
-
+    
     render() {
-        let { debug } = this.props
-
-        let button = { height: '100%', cursor: 'pointer' }
-        let disabledButton = { ...button, filter: 'grayscale(100%)' }
         return <div className='w-100 h-100'>
-            <img src={playBtn}
-                style={debug.isFetching ? disabledButton : button}
-                onClick={this.play}
-            />
-            <img src={stepOverBtn}
-                style={debug.isFetching || !debug.isDebugging ? disabledButton : button}
-                disabled={debug.isFetching || !debug.isDebugging}
-                onClick={this.stepOver}
-            />
-            <img src={stepIntoBtn}
-                style={debug.isFetching || !debug.isDebugging ? disabledButton : button}
-                disabled={debug.isFetching || !debug.isDebugging}
-                onClick={this.stepInto}
-            />
-            <img src={stepOutBtn}
-                style={debug.isFetching || !debug.isDebugging ? disabledButton : button}
-                disabled={debug.isFetching || !debug.isDebugging}
-                onClick={this.stepOut}
-            />
-            <img src={restartBtn}
-                style={debug.isFetching || !debug.isDebugging ? disabledButton : button}
-                disabled={debug.isFetching || !debug.isDebugging}
-                onClick={this.start}
-            />
-            <img src={stopBtn}
-                style={button}
-                onClick={this.stop}
-            />
+            <img src={playBtn} className='h-100'
+                style={{ cursor: 'pointer', filter: this.isPlayAvailable() ? null : 'grayscale(80%)' }}
+                onClick={this.play} />
+            <img src={stepOverBtn} className='h-100'
+                style={{ cursor: 'pointer', filter: this.isStepAvailable() ? null : 'grayscale(80%)' }}
+                onClick={this.stepOver} />
+            <img src={stepIntoBtn} className='h-100'
+                style={{ cursor: 'pointer', filter: this.isStepAvailable() ? null : 'grayscale(80%)' }}
+                onClick={this.stepInto} />
+            <img src={stepOutBtn} className='h-100'
+                style={{ cursor: 'pointer', filter: this.isStepAvailable() ? null : 'grayscale(80%)' }}
+                onClick={this.stepOut} />
+            <img src={restartBtn} className='h-100'
+                style={{ cursor: 'pointer', filter: this.isRestartOrStopAvailable() ? null : 'grayscale(80%)' }}
+                onClick={this.restart} />
+            <img src={stopBtn} className='h-100'
+                style={{ cursor: 'pointer', filter: this.isRestartOrStopAvailable() ? null : 'grayscale(80%)' }}
+                onClick={this.stop} />
         </div>
-
     }
 }
