@@ -30,9 +30,13 @@ export default class ScriptEditor extends React.Component {
             readOnly={!script.editable}
             onChange={onChange}
             onUpdate={onUpdate}
-            markers={script.markers.map(line => ({
-                ln: line, cls: 'position-absolute ' + !script.error ? 'bg-info' : 'bg-danger'
-            }))}
+            markers={script.markers.map(
+                ({ line, type }) => ({
+                    line: line,
+                    css: 'position-absolute ' +
+                        (type === 'warn' ? 'bg-warning' : type === 'error' ? 'bg-danger' : 'bg-info')
+                })
+            )}
         />
     }
 }

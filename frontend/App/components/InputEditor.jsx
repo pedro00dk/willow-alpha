@@ -47,9 +47,7 @@ export default class InputEditor extends React.Component {
             onExec={onExec}
             onChange={onChange}
             onUpdate={onUpdate}
-            markers={Array(input.readLines).fill().map(
-                (_, i) => ({ ln: i, cls: 'bg-info position-absolute' })
-            )}
+            markers={Array(input.readLines).fill().map((_, i) => ({ line: i, css: 'bg-info position-absolute' }))}
         />
     }
 }

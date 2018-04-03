@@ -23,9 +23,9 @@ export default class TextEditor extends React.Component {
             () => {
                 if (this.ref.parentElement.clientWidth !== this.parentWidth ||
                     this.ref.parentElement.clientHeight !== this.parentHeight) {
-                        this.parentWidth = this.ref.parentElement.clientWidth
-                        this.parentHeight = this.ref.parentElement.clientHeight
-                        this.editor.resize(true)
+                    this.parentWidth = this.ref.parentElement.clientWidth
+                    this.parentHeight = this.ref.parentElement.clientHeight
+                    this.editor.resize(true)
                 }
             },
             1000
@@ -56,14 +56,12 @@ export default class TextEditor extends React.Component {
         this.editor.$blockScrolling = Infinity
 
         if (onUpdate) onUpdate(this.editor)
-        if (markers) {
-            Object.values(this.editor.session.getMarkers(false))
-                .filter(marker => marker.id > 2)
-                .forEach(marker => this.editor.session.removeMarker(marker.id))
-            markers.forEach(
-                ({ ln, cls }) => this.editor.session.addMarker(new Range(ln, 0, ln, 1), cls, 'screenLine', false)
-            )
-        }
+        Object.values(this.editor.session.getMarkers(false))
+            .filter(marker => marker.id > 2)
+            .forEach(marker => this.editor.session.removeMarker(marker.id))
+        if (markers) markers.forEach(
+            ({ line, css }) => this.editor.session.addMarker(new Range(line, 0, line, 1), css, 'screenLine', false)
+        )
     }
 
     componentWillUnmount() {
