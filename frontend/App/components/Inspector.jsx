@@ -83,7 +83,7 @@ export default class Inspector extends React.Component {
                     <div>{
                         Object.values(object.members).map(
                             (value, i) => <div className='p-1' style={{ display: 'inline' }}>
-                                <sup><small>{value[0] + ' '}</small></sup>{value[1]}
+                                <sup><small>{value[0] + ' '}</small></sup>{value[1] instanceof Array ? '::' : value[1]}
                             </div>
                         )
                     }</div>
@@ -96,7 +96,7 @@ export default class Inspector extends React.Component {
                     <div>{
                         Object.values(object.members).map(
                             (value, i) => <div className='p-1' style={{ display: 'block' }}>
-                                <small>{value[0] + ' '}</small>{value[1]}
+                                <small>{value[0] instanceof Array ? '::' : value[0] + ' '}</small>{value[1] instanceof Array ? '::' : value[1]}
                             </div>
                         )
                     }</div>
@@ -113,7 +113,7 @@ export default class Inspector extends React.Component {
                                 Array(boxSide).fill().map((_, j) => {
                                     return <div className='p-1' style={{ display: 'inline' }}>{
                                         (i * boxSide + j) < object.members.length
-                                            ? object.members[(i * boxSide + j)][1]
+                                            ? object.members[(i * boxSide + j)][1] instanceof Array ? '::' : object.members[(i * boxSide + j)][1]
                                             : null
                                     } </div>
                                 })
@@ -129,7 +129,7 @@ export default class Inspector extends React.Component {
                     <div>{
                         Object.values(object.members).map(
                             (value, i) => <div className='p-1' style={{ display: 'block' }}>
-                                <small>{value[0].substring(1, value[0].length - 1) + ' '}</small>{value[1]}
+                                <small>{value[0].substring(1, value[0].length - 1) + ' '}</small>{value[1] instanceof Array ? '::' : value[1]}
                             </div>
                         )
                     }</div>
@@ -151,7 +151,7 @@ export default class Inspector extends React.Component {
             [200, 30]
         ]
         var pathData = lineGenerator(points)
-        //svg.append('path').attr('d', pathData).style('fill', null)
+        svg.append('path').attr('d', pathData).style('fill', null)
 
         return dom.toReact()
     }
