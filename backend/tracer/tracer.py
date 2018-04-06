@@ -313,7 +313,7 @@ class TracerProcess:
                          for name, value in frame_locals.items()
                          if not name.startswith('__') and not name.endswith('__')}
             frames_variables.append({'name': frame_name, 'variables': variables})
-        return {'objects': objects, 'stack': frames_variables}
+        return {'objects': objects, 'stack': frames_variables, 'usercls': [clazz.__name__ for clazz in user_classes]}
 
     def walk_object(self, obj, objects, user_classes):
         if isinstance(obj, (bool, int, float, type(None))):

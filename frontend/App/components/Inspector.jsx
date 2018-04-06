@@ -64,7 +64,9 @@ export default class Inspector extends React.Component {
         if (frameResponses.length === 0) return null
 
         let lastFrameResponse = frameResponses.slice(-1)[0]
-        let objects = Object.values(lastFrameResponse.value.locals.objects).map(object => this.renderHeapObject(object))
+        let objects = Object.values(lastFrameResponse.value.locals.objects).map(
+            object => this.renderHeapObject(object, lastFrameResponse.value.locals.usercls)
+        )
 
         return <div className='w-100 h-100' style={{ overflow: 'auto' }}>
             <div className='p-1' style={{ height: '1000px', width: '1000px' }}>
@@ -73,8 +75,8 @@ export default class Inspector extends React.Component {
         </div>
     }
 
-    renderHeapObject(object) {
-        if (object.type === 'list') {
+    renderHeapObject(object, userClasses) {
+        if (object.type === 'tuple' || object.type === 'list') {
             return <Draggable bounds="parent">
                 <div className="border p-2 btn-primary" style={{ display: "inline-block" }}>
                     <h5>{object.type}</h5>
@@ -120,8 +122,19 @@ export default class Inspector extends React.Component {
                     }</div>
                 </div>
             </Draggable>
-        } else if (object.type) {
-
+        } else if (userClasses.indexOf(object.type) >= 0) {
+            return <Draggable bounds="parent">
+                <div className="border p-2 btn-primary" style={{ display: "inline-block" }}>
+                    <h5>{object.type}</h5>
+                    <div>{
+                        Object.values(object.members).map(
+                            (value, i) => <div className='p-1' style={{ display: 'block' }}>
+                                <small>{value[0].substring(1, value[0].length - 1) + ' '}</small>{value[1]}
+                            </div>
+                        )
+                    }</div>
+                </div>
+            </Draggable>
         }
     }
 
