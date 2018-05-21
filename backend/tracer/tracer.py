@@ -320,11 +320,11 @@ class TracerProcess:
             return obj
         if isinstance(obj, str):
             return f'\'{obj}\''
-        ref = str(id(obj))
+        ref = id(obj)
         if ref in objects:
             return ref,
         else:
-            objects[ref] = {'type': type(obj).__name__, 'members': []}
+            objects[ref] = {'ref': ref, 'type': type(obj).__name__, 'members': []}
         if isinstance(obj, (tuple, list, set, frozenset)):
             members = enumerate(obj)
         elif isinstance(obj, dict):
