@@ -193,15 +193,9 @@ class TracerProcess:
             text = reduce((lambda e0, e1: e0 + sep + e1), map((lambda e: str(e)), values)) + end
             self.sub_to_main_queue.put({'event': EVENT_PRINT, 'value': text})
 
-    class JSONStrEncoder(json.JSONEncoder):
-        """Json encoder that serializes non common objects as str(o)."""
-
-        def default(self, o):
-            return str(o)
-
     @staticmethod
     def allow_only_builtins(allow, glb_cpy):
-        glb_cpy['__builtins__'] = {name: bltn for name, bltn in glb_cpy['__builtins__'].items() if name in allow}
+        glb_cpy['__builtins__'] = {name: builtin for name, builtin in glb_cpy['__builtins__'].items() if name in allow}
 
     @staticmethod
     def allow_only_modules(allow, sys_mod):
@@ -250,7 +244,9 @@ class TracerProcess:
             self.sub_main_queue.put({
                 'event': EVENT_ERROR,
                 'value': {
-                    'type': str(type(e)), 'value': e.args, 'tb': traceback.format_exception(type(e), e, e.__traceback__)
+                    'type': str(type(e)),
+                    'value': e.args,
+                    'traceback': traceback.format_exception(type(e), e, e.__traceback__)
                 },
             })
             self.main_sub_queue.get()
@@ -277,14 +273,17 @@ class TracerProcess:
         line = frame.f_lineno - 1
         text = self.script_lines[line]
         frames, stack, depth = self.get_stack(frame)
-        args = {'type': str(args[0]), 'value': args[1].args, 'tb': traceback.format_exception(*args)} \
-            if event == 'exception' else args
-        frames_locals = self.build_object_graph(frames)
+        exception = {
+            'type': str(args[0]),
+            'value': args[1].args,
+            'traceback': traceback.format_exception(*args)
+        } if event == 'exception' else None
+        objects = self.build_object_graph(frames)
         kill = f'frame_count_limit ({self.frame_count_limit})' if self.frame_count >= self.frame_count_limit else None
         end = event == 'return' and depth <= 1 or kill is not None
         return {
-            'event': event, 'line': line, 'text': text, 'stack': stack, 'depth': depth, 'locals': frames_locals,
-            'args': args, 'kill': kill, 'end': end,
+            'event': event, 'line': line, 'text': text, 'stack': stack, 'depth': depth, 'locals': objects,
+            'exception': exception, 'kill': kill, 'end': end,
         }
 
     def get_stack(self, frame):
@@ -304,46 +303,44 @@ class TracerProcess:
 
     def build_object_graph(self, frames):
         objects = {}
-        user_classes = set()
-        frames_variables = []
+        classes = set()
+        stack = []
         for frame in frames:
             frame_locals = frame.f_locals
             frame_name = frame.f_code.co_name
-            variables = {name: self.walk_object(frame_locals[name], objects, user_classes)
-                         for name, value in frame_locals.items()
-                         if not name.startswith('__') and not name.endswith('__')}
-            frames_variables.append({'name': frame_name, 'variables': variables})
-        return {'objects': objects, 'stack': frames_variables, 'usercls': [clazz.__name__ for clazz in user_classes]}
+            variables = {name: self.walk_object(frame_locals[name], objects, classes)
+                         for name, value in frame_locals.items() if not name.startswith('__')}
+            stack.append({'name': frame_name, 'variables': variables})
+        return {'objects': objects, 'classes': [c.__name__ for c in classes],  'stack': stack}
 
-    def walk_object(self, obj, objects, user_classes):
+    def walk_object(self, obj, objects, classes):
         if isinstance(obj, (bool, int, float, type(None))):
             return obj
         if isinstance(obj, str):
             return f'\'{obj}\''
         ref = id(obj)
-        if ref in objects:
-            return ref,
-        else:
-            objects[ref] = {'ref': ref, 'type': type(obj).__name__, 'members': []}
-        if isinstance(obj, (tuple, list, set, frozenset)):
-            members = enumerate(obj)
-        elif isinstance(obj, dict):
-            members = obj.items()
-        elif isinstance(obj, type) or isinstance(obj, (*user_classes,)):
-            if isinstance(obj, type):
-                user_classes.add(obj)
-            members = [(name, getattr(obj, name)) for name in dir(obj)
-                       if not name.startswith('__') and not name.endswith('__')]
-        else:
-            return type(obj).__name__
-        walk_members = [(self.walk_object(name, objects, user_classes), self.walk_object(value, objects, user_classes))
-                        for name, value in members]
-        objects[ref]['members'] = walk_members
+        if ref not in objects:
+            if isinstance(obj, (tuple, list, set, frozenset)):
+                members = enumerate(obj)
+            elif isinstance(obj, dict):
+                members = obj.items()
+            elif isinstance(obj, type):
+                members = [(name, value) for name, value in vars(obj).items() if not name.startswith('__')]
+                classes.add(obj)
+            elif isinstance(obj, (*classes,)):
+                members = vars(obj).items()
+            else: # not introspected types
+                return f'{type(obj).__name__}'
+
+            walk_members = [(self.walk_object(name, objects, classes), self.walk_object(value, objects, classes))
+                            for name, value in members]
+            objects[ref] = {'type': type(obj).__name__, 'ref': ref, 'members': walk_members}
         return ref,
 
 
 def main():
     pass
+
 
 if __name__ == '__main__':
     main()
