@@ -67,6 +67,7 @@ export default class Inspector extends React.Component {
         let isOnlyValueShowed = object.type == 'set'
         let {
             _style = {},
+            _varsStyle = {},
             _varStyle = {},
             _varHides = [],
             _varInside = []
@@ -86,11 +87,15 @@ export default class Inspector extends React.Component {
                     isUserDefinedInstance && _varInside.indexOf(varName) !== -1
                 )
                 return <div
-                    className={isHorizontalListed ? 'd-inline p-1' : 'd-block p-1'}
-                    style={isUserDefinedInstance ? { ..._varStyle[this.renderVariableName(name)] } : null}
+                    className={(isHorizontalListed ? 'd-table-cell' : 'd-table-column') + ' align-top p-1'}
+                    style={
+                        isUserDefinedInstance
+                            ? { ..._varsStyle, ..._varStyle[this.renderVariableName(name)] }
+                            : null
+                    }
                 >
-                    {!isOnlyValueShowed ? varName + ': ' : null}
-                    {varValue}
+                    <span className='align-top'>{!isOnlyValueShowed ? varName + ': ' : null}</span>
+                    <span>{varValue}</span>
                 </div>
             })
 
