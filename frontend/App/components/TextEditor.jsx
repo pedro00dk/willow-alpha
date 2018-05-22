@@ -12,24 +12,35 @@ const { Range } = ace.acequire('ace/range')
 
 export default class TextEditor extends React.Component {
 
-    componentDidMount() {
-        this.editor = ace.edit(this.ref)
-
-        let { onExec, onChange } = this.props
-
-        this.parentWidth = this.ref.parentElement.clientWidth
-        this.parentHeight = this.ref.parentElement.clientHeigh
-        this.tickSizeUpdater = window.setInterval(
+    componentWillMount() {
+        this.parentWidth = null
+        this.parentHeight = null
+        this.resizeRoutine = window.setInterval(
             () => {
-                if (this.ref.parentElement.clientWidth !== this.parentWidth ||
-                    this.ref.parentElement.clientHeight !== this.parentHeight) {
+                if (this.ref && this.editor &&
+                    (
+                        this.ref.parentElement.clientWidth !== this.parentWidth ||
+                        this.ref.parentElement.clientHeight !== this.parentHeight
+                    )
+                ) {
                     this.parentWidth = this.ref.parentElement.clientWidth
                     this.parentHeight = this.ref.parentElement.clientHeight
                     this.editor.resize(true)
                 }
             },
-            1000
+            2000
         )
+    }
+
+    componentWillUnmount() {
+        window.clearInterval(this.resizeRoutine)
+    }
+
+    componentDidMount() {
+        this.editor = ace.edit(this.ref)
+
+        let { onExec, onChange } = this.props
+
         if (onExec) this.editor.commands.on('exec', event => onExec(event, this.editor))
         if (onChange) this.editor.session.on('change', change => onChange(change, this.editor))
         this.componentDidUpdate()
@@ -59,16 +70,12 @@ export default class TextEditor extends React.Component {
         Object.values(this.editor.session.getMarkers(false))
             .filter(marker => marker.id > 2)
             .forEach(marker => this.editor.session.removeMarker(marker.id))
-        if (markers) markers.forEach(
-            ({ line, css }) => this.editor.session.addMarker(new Range(line, 0, line, 1), css, 'screenLine', false)
-        )
-    }
-
-    componentWillUnmount() {
-        window.clearInterval(this.tickSizeUpdater)
+        if (markers) markers
+            .forEach(({ line, css }) =>
+                this.editor.session.addMarker(new Range(line, 0, line, 1), css, 'screenLine', false))
     }
 
     render() {
-        return <div style={{ width: '100%', height: '100%' }} ref={ref => this.ref = ref} />
+        return <div className='w-100 h-100' ref={ref => this.ref = ref} />
     }
 }

@@ -1,9 +1,9 @@
 import React from 'react'
 import { connect } from 'react-redux'
 
-import { setScript } from '../reducers/script'
-
 import TextEditor from './TextEditor'
+
+import { setScript } from '../reducers/script'
 
 
 @connect(state => ({ script: state.script }))
@@ -21,7 +21,7 @@ export default class ScriptEditor extends React.Component {
         let onUpdate = editor => {
             let { script } = this.props
 
-            if (script.markers.length > 0) editor.scrollToLine(script.markers.slice(-1)[0], true, false, () => { })
+            if (script.markers.length > 0) editor.scrollToLine(script.markers.slice(-1)[0], true, true, () => { })
         }
 
         return <TextEditor

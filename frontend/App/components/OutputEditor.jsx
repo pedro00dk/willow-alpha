@@ -1,9 +1,9 @@
 import React from 'react'
 import { connect } from 'react-redux'
 
-import { setInput, setInputText } from '../reducers/output'
-
 import TextEditor from './TextEditor'
+
+import { setInput, setInputText } from '../reducers/output'
 
 
 @connect(state => ({ output: state.output }))

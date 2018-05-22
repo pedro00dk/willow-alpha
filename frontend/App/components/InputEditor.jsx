@@ -1,9 +1,9 @@
 import React from 'react'
 import { connect } from 'react-redux'
 
-import { setInput, setInputText } from '../reducers/input'
-
 import TextEditor from './TextEditor'
+
+import { setInput, setInputText } from '../reducers/input'
 
 
 @connect(state => ({ input: state.input }))
@@ -16,13 +16,17 @@ export default class InputEditor extends React.Component {
             let { input } = this.props
 
             let readLines = input.readLines
-            let selFrom = editor.selection.getSelectionAnchor()
-            let selTo = editor.selection.getSelectionLead()
+            let selectionAnchor = editor.selection.getSelectionAnchor()
+            let selectionLead = editor.selection.getSelectionLead()
             if (event.command.name === 'insertstring' || event.command.name === 'paste' ||
                 event.command.name === 'backspace' || event.command.name === 'del' || event.command.name === 'cut') {
-                if ((selFrom.row < readLines || selTo.row < readLines) ||
-                    (event.command.name === 'backspace' && selFrom.row === readLines && selFrom.column === 0
-                        && selFrom.row === selTo.row && selFrom.column === selTo.column)) {
+                if (selectionAnchor.row < readLines || selectionLead.row < readLines ||
+                    (
+                        event.command.name === 'backspace' && selectionAnchor.row === readLines &&
+                        selectionAnchor.column === 0 && selectionAnchor.row === selectionLead.row &&
+                        selectionAnchor.column === selectionLead.column
+                    )
+                ) {
                     event.preventDefault()
                     event.stopPropagation()
                 }
