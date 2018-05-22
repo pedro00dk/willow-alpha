@@ -31,6 +31,7 @@
         "react-faux-dom": "^4.1.0",
         "react-measure": "^2.0.2",
         "react-redux": "^4.4.0",
+        "react-svg-pathline": "^0.5.0",
         "redux": "^3.3.1",
         "redux-thunk": "^1.0.3"
     }

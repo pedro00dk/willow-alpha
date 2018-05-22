@@ -8,20 +8,68 @@ import * as d3 from 'd3'
 @connect(state => ({ debug: state.debug }))
 export default class Inspector extends React.Component {
 
+    constructor(props) {
+        super(props)
+    }
+
+    componentDidUpdate() {
+
+    }
+
     render() {
+        let { debug } = this.props
+
+        let frameResponses = debug.responses.filter(response => response.event === 'frame')
+        if (frameResponses.length === 0) return null
+
+        let lastFrameResponse = frameResponses.slice(-1)[0]
+
+        let reactObjects = this.generateObjects(lastFrameResponse.value.locals.objects, lastFrameResponse.value.locals.classes)
+        //console.log(this.props.debug)
+        //console.log(reactObjects)
+
         return <div className='row m-0 p-0 h-100'>
-            <div className='position-absolute w-100  h-100'>
-                {this.renderPaths()}
-            </div>
-            <div className='col-3 m-0 p-0 h-100 border' style={{ overflow: 'auto' }}>
-                {this.renderStack()}
-            </div>
-            <div className='col-9 m-0 p-1 h-100 border' style={{ overflow: 'auto' }}>
-                {this.renderHeap()}
+            <div className='col-12 m-0 p-1 h-100 border' style={{ overflow: 'auto', zoom: 0.75 }}>
+                <div className='p-1' style={{ height: '1000px', width: '1000px' }}>
+                    {Object.values(reactObjects)}
+                </div>
             </div>
         </div>
     }
 
+    generateObjects(pythonObjects, pythonClasses) {
+        let reactObjects = {}
+        Object.keys(pythonObjects).forEach(ref => reactObjects[ref] = this.renderObject(pythonObjects[ref], pythonClasses))
+        return reactObjects
+    }
+
+    renderObject(object, classes) {
+        let {
+            _style = {},
+            _varStyle = {},
+            _varHides = []
+        } = object.injects
+
+        return <div className='d-inline-block border p-1 btn-primary' style={{ ..._style }}>
+            <h5>{object.type}</h5>
+            <div>{
+                Object.values(object.members)
+                    .filter(([name, _]) => _varHides.indexOf(name.substring(1, name.length - 1)) === -1)
+                    .map(([name, value]) =>
+                        <div
+                            className={
+                                ['dict', 'type'].indexOf(object.type) !== -1 || classes.indexOf(object.type) !== -1
+                                    ? 'd-block p-1' : 'd-inline p-1'
+                            }
+                            style={{ ..._varStyle[name.substring(1, name.length - 1)] }}
+                        >
+                            {!object.type.endsWith('set') ? <small>{name + ' '}</small> : null}
+                            {value instanceof Array ? '::' : value}
+                        </div>
+                    )
+            }</div>
+        </div>
+    }
 
     renderStack() {
         let { debug } = this.props
@@ -57,7 +105,7 @@ export default class Inspector extends React.Component {
         </table >
     }
 
-    renderHeap() {
+    asdfrenderHeap() {
         let { debug } = this.props
 
         let frameResponses = debug.responses.filter(response => response.event === 'frame')
@@ -75,7 +123,7 @@ export default class Inspector extends React.Component {
         </div>
     }
 
-    renderHeapObject(object, userClasses) {
+    rasdfenderHeapObject(object, userClasses) {
         if (object.type === 'tuple' || object.type === 'list') {
             return <Draggable bounds="parent">
                 <div className="border p-2 btn-primary" style={{ display: "inline-block" }}>
@@ -123,11 +171,12 @@ export default class Inspector extends React.Component {
                 </div>
             </Draggable>
         } else if (userClasses.indexOf(object.type) >= 0) {
+            let style = object.members.filter(member => member[0] == '\'style\'')[0]
             return <Draggable bounds="parent">
-                <div className="border p-2 btn-primary" style={{ display: "inline-block" }}>
+                <div className="border p-2 btn-primary" style={{ ...style, display: "inline-block" }}>
                     <h5>{object.type}</h5>
                     <div>{
-                        Object.values(object.members).map(
+                        Object.values(object.members).filter(member => member[0] !== '\'style\'').map(
                             (value, i) => <div className='p-1' style={{ display: 'block' }}>
                                 <small>{value[0].substring(1, value[0].length - 1) + ' '}</small>{value[1] instanceof Array ? '::' : value[1]}
                             </div>

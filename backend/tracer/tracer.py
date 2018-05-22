@@ -320,21 +320,23 @@ class TracerProcess:
             return f'\'{obj}\''
         ref = id(obj)
         if ref not in objects:
+            members = []
+            injects = {}
             if isinstance(obj, (tuple, list, set, frozenset)):
                 members = enumerate(obj)
             elif isinstance(obj, dict):
                 members = obj.items()
             elif isinstance(obj, type):
-                members = [(name, value) for name, value in vars(obj).items() if not name.startswith('__')]
+                members = [(name, value) for name, value in vars(obj).items() if not name.startswith('_')]
                 classes.add(obj)
             elif isinstance(obj, (*classes,)):
-                members = vars(obj).items()
-            else: # not introspected types
+                members = [(name, value) for name, value in vars(obj).items() if not name.startswith('_')]
+                injects = {name: value for name, value in vars(obj).items() if name.startswith('_')}
+            else:  # not introspected types
                 return f'{type(obj).__name__}'
-
             walk_members = [(self.walk_object(name, objects, classes), self.walk_object(value, objects, classes))
                             for name, value in members]
-            objects[ref] = {'type': type(obj).__name__, 'ref': ref, 'members': walk_members}
+            objects[ref] = {'type': type(obj).__name__, 'ref': ref, 'members': walk_members, 'injects': injects}
         return ref,
 
 
