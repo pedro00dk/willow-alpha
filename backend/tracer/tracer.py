@@ -305,19 +305,23 @@ class TracerProcess:
         objects = {}
         classes = set()
         stack = []
-        for frame in frames:
+        for frame in frames[::-1]:
             frame_locals = frame.f_locals
             frame_name = frame.f_code.co_name
-            variables = {name: self.walk_object(frame_locals[name], objects, classes)
-                         for name, value in frame_locals.items() if not name.startswith('__')}
-            stack.append({'name': frame_name, 'variables': variables})
-        return {'objects': objects, 'classes': [c.__name__ for c in classes],  'stack': stack}
+            variables = [(name, self.walk_object(frame_locals[name], objects, classes))
+                         for name, value in frame_locals.items() if not name.startswith('_')]
+            injects = [(name, value) for name, value in frame_locals.items()
+                       if name.startswith('_') and not name.endswith('_')]
+            stack.append({'name': frame_name, 'variables': variables, 'injects': injects})
+        return {'objects': objects, 'classes': [c.__name__ for c in classes],  'stack': stack[::-1]}
 
     def walk_object(self, obj, objects, classes):
         if isinstance(obj, (bool, int, float, type(None))):
             return obj
         if isinstance(obj, str):
             return f'\'{obj}\''
+        if isinstance(obj, complex):
+            return str(obj)
         ref = id(obj)
         if ref not in objects:
             members = []
@@ -332,7 +336,7 @@ class TracerProcess:
             else:  # not introspected types
                 if isinstance(obj, type) and obj not in {list, tuple, set, dict}:
                     classes.add(obj)
-                return f'{type(obj).__name__}'
+                return type(obj).__name__
             objects[ref] = {'type': type(obj).__name__, 'ref': ref}
             walk_members = [(self.walk_object(name, objects, classes), self.walk_object(value, objects, classes))
                             for name, value in members]
