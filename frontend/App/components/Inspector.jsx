@@ -20,6 +20,13 @@ export default class Inspector extends React.Component {
         let lastFrameResponse = frameResponses.slice(-1)[0]
         let { heapObjects, heapReferences } = this.generateHeapObjectsAndReferences(lastFrameResponse.value.locals)
         let { stackFrames, stackReferences } = this.generateStackFramesAndReferences(lastFrameResponse.value.locals)
+
+        let referencedObjects = Object.keys(heapObjects)
+            .filter(ref =>
+                heapReferences[ref] && heapReferences[ref].count > 0 ||
+                stackReferences[ref] && stackReferences[ref].count > 0
+            )
+            .map(ref => heapObjects[ref])
         //{stackFrames}
         return <div className='row m-0 p-0 h-100'>
             <div className='col-3 m-0 p-1 h-100 border'>
@@ -27,7 +34,7 @@ export default class Inspector extends React.Component {
             </div>
             <div className='col-9 m-0 p-1 h-100 border' style={{ overflow: 'auto', zoom: 0.75 }}>
                 <div className='p-1' style={{ height: '1000px', width: '1000px' }}>
-                    {Object.values(heapObjects)}
+                    {referencedObjects}
                 </div>
             </div>
         </div>
@@ -147,8 +154,9 @@ export default class Inspector extends React.Component {
                 // inside rendering only works with user objects containing python objects
             }
             // lazily puts spawn reference in references map
-            if (references[variable[0]] === undefined) references[variable[0]] = []
-            return <span ref={ref => references[variable[0]].push(ref)}>::</span>
+            if (references[variable[0]] === undefined) references[variable[0]] = { count: 0, spans: [] }
+            references[variable[0]].count++
+            return <span ref={ref => references[variable[0]].spans.push(ref)}>::</span>
         }
         variable = variable.toString()
         return variable.length > crop ? variable.substring(0, crop - 2) + '..' : variable
