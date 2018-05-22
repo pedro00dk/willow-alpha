@@ -5,16 +5,11 @@ import Draggable from 'react-draggable'
 import FauxDOM from 'react-faux-dom'
 import * as d3 from 'd3'
 
+import { setObjectsContext } from '../reducers/inspector'
+
+
 @connect(state => ({ debug: state.debug }))
 export default class Inspector extends React.Component {
-
-    constructor(props) {
-        super(props)
-    }
-
-    componentDidUpdate() {
-
-    }
 
     render() {
         let { debug } = this.props
@@ -23,45 +18,30 @@ export default class Inspector extends React.Component {
         if (frameResponses.length === 0) return null
 
         let lastFrameResponse = frameResponses.slice(-1)[0]
-
-        let objects = this.generateObjects(lastFrameResponse.value.locals)
-
+        let { heapObjects, heapReferences } = this.generateHeapObjectsAndReferences(lastFrameResponse.value.locals)
+        let { stackFrames, stackReferences } = this.generateStackFramesAndReferences(lastFrameResponse.value.locals)
+        //{stackFrames}
         return <div className='row m-0 p-0 h-100'>
-            <div className='col-12 m-0 p-1 h-100 border' style={{ overflow: 'auto', zoom: 0.75 }}>
+            <div className='col-3 m-0 p-1 h-100 border'>
+                {stackFrames}
+            </div>
+            <div className='col-9 m-0 p-1 h-100 border' style={{ overflow: 'auto', zoom: 0.75 }}>
                 <div className='p-1' style={{ height: '1000px', width: '1000px' }}>
-                    {Object.values(objects)}
+                    {Object.values(heapObjects)}
                 </div>
             </div>
         </div>
     }
 
-    generateObjects(locals) {
+    generateHeapObjectsAndReferences(locals) {
         let objects = {}
-        Object.keys(locals.objects).forEach(ref => objects[ref] = this.renderObject(locals.objects[ref], locals))
-        return objects
+        let references = {}
+        Object.keys(locals.objects)
+            .forEach(ref => objects[ref] = this.generateObject(locals.objects[ref], locals, references))
+        return { heapObjects: objects, heapReferences: references }
     }
 
-    renderVariableName(name) {
-        return name.substring(1, name.length - 1)
-    }
-
-    renderVariableValue(variable, locals, crop = 8, inside = false) {
-        if (variable instanceof Array) {
-            if (inside) {
-                let object = locals.objects[variable[0]]
-                let isUserDefinedInstance = locals.classes.indexOf(object.type) !== -1
-                if (!isUserDefinedInstance) return this.renderObject(object, locals)
-                // inside rendering only works with user objects containing python objects
-            }
-            // put in link context
-            return '::'
-        }
-        variable = variable.toString()
-        return variable.length > crop ? variable.substring(0, crop - 2) + '..' : variable
-    }
-
-    renderObject(object, locals) {
-        console.log(locals.classes)
+    generateObject(object, locals, references) {
         let isUserDefinedInstance = locals.classes.indexOf(object.type) !== -1
         let isHorizontalListed = ['list', 'tuple', 'set'].indexOf(object.type) !== -1
         let isOnlyValueShowed = object.type == 'set'
@@ -73,16 +53,16 @@ export default class Inspector extends React.Component {
             _varInside = []
         } = object.injects
 
-        let header = <h5>{object.type}</h5>
         let contents = Object.values(object.members)
-            .filter(([name, _]) => !isUserDefinedInstance || _varHides.indexOf(this.renderVariableName(name)) === -1)
+            .filter(([name, _]) => !isUserDefinedInstance || _varHides.indexOf(this.generateVariableName(name)) === -1)
             .map(([name, value]) => {
                 let varName = isUserDefinedInstance
-                    ? this.renderVariableName(name)
-                    : this.renderVariableValue(name, locals)
-                let varValue = this.renderVariableValue(
+                    ? this.generateVariableName(name)
+                    : this.generateVariableValue(name, locals, references)
+                let varValue = this.generateVariableValue(
                     value,
                     locals,
+                    references,
                     undefined,
                     isUserDefinedInstance && _varInside.indexOf(varName) !== -1
                 )
@@ -90,7 +70,7 @@ export default class Inspector extends React.Component {
                     className={(isHorizontalListed ? 'd-table-cell' : 'd-table-column') + ' align-top p-1'}
                     style={
                         isUserDefinedInstance
-                            ? { ..._varsStyle, ..._varStyle[this.renderVariableName(name)] }
+                            ? { ..._varsStyle, ..._varStyle[this.generateVariableName(name)] }
                             : null
                     }
                 >
@@ -103,44 +83,79 @@ export default class Inspector extends React.Component {
             className='d-inline-block border p-1 btn-primary'
             style={isUserDefinedInstance ? { ..._style } : null}
         >
-            {header}
+            <h5>{object.type}</h5>
             {contents}
         </div>
     }
 
-    renderStack() {
-        let { debug } = this.props
-
-        let frameResponses = debug.responses.filter(response => response.event === 'frame')
-        if (frameResponses.length === 0) return null
-
-        let lastFrameResponse = frameResponses.slice(-1)[0]
-        return lastFrameResponse.value.locals.stack.map(({ name, variables }) => this.renderStackFrame(name, variables))
+    generateStackFramesAndReferences(locals) {
+        let frames = []
+        let references = {}
+        Object.values(locals.stack)
+            .forEach(frame => frames.push(this.generateFrame(frame, locals, references)))
+        return { stackFrames: frames, stackReferences: references }
     }
 
-    renderStackFrame(name = 'frame', variables = []) {
-        return <table className='table table-sm table-hover table-striped table-bordered'>
+    generateFrame(frame, locals, references) {
+        let {
+            _style = {},
+            _varsStyle = {},
+            _varStyle = {},
+            _varHides = [],
+            _varInside = []
+        } = frame.injects
+
+        let contents = Object.values(frame.variables)
+            .filter(([name, _]) => _varHides.indexOf(this.generateVariableName(name)) === -1)
+            .map(([name, value]) => {
+                let varValue = this.generateVariableValue(
+                    value,
+                    locals,
+                    references,
+                    undefined,
+                    _varInside.indexOf(name) !== -1
+                )
+                return <tr>
+                    <th scope='col'>{name}</th>
+                    <th scope='col'>{varValue}</th>
+                </tr>
+            })
+
+        return <table className='table table-sm table-hover table-striped table-bordered' style={{ ..._style }}>
             <thead className='thead-light'>
                 <tr>
-                    <th scope='col'>{name.length > 10 ? name.substring(0, 8) + '..' : name}</th>
+                    <th scope='col'>{frame.name}</th>
                     <th scope='col'>{'value'}</th>
                 </tr>
             </thead>
-            <tbody>{
-                Object.keys(variables).map(name => {
-                    return <tr>
-                        <th scope='col'>{name.length > 10 ? name.substring(0, 8) + '..' : name}</th>
-                        <th scope='col'>{
-                            variables[name] instanceof Array
-                                ? <span ref={variables[name][0]}>::</span>
-                                : variables[name]
-                        }
-                        </th>
-                    </tr>
-                })
-            }</tbody>
+            <tbody>
+                {contents}
+            </tbody>
         </table >
     }
+
+    generateVariableName(name) {
+        return name.substring(1, name.length - 1)
+    }
+
+    generateVariableValue(variable, locals, references, crop = 8, inside = false) {
+        if (variable instanceof Array) {
+            if (inside) {
+                let object = locals.objects[variable[0]]
+                let isUserDefinedInstance = locals.classes.indexOf(object.type) !== -1
+                if (!isUserDefinedInstance) return this.generateObject(object, locals)
+                // inside rendering only works with user objects containing python objects
+            }
+            // lazily puts spawn reference in references map
+            if (references[variable[0]] === undefined) references[variable[0]] = []
+            return <span ref={ref => references[variable[0]].push(ref)}>::</span>
+        }
+        variable = variable.toString()
+        return variable.length > crop ? variable.substring(0, crop - 2) + '..' : variable
+    }
+
+
+
 
     asdfrenderHeap() {
         let { debug } = this.props
