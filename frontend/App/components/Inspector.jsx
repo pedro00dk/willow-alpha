@@ -24,50 +24,74 @@ export default class Inspector extends React.Component {
 
         let lastFrameResponse = frameResponses.slice(-1)[0]
 
-        let reactObjects = this.generateObjects(lastFrameResponse.value.locals.objects, lastFrameResponse.value.locals.classes)
-        //console.log(this.props.debug)
-        //console.log(reactObjects)
+        let objects = this.generateObjects(lastFrameResponse.value.locals)
 
         return <div className='row m-0 p-0 h-100'>
             <div className='col-12 m-0 p-1 h-100 border' style={{ overflow: 'auto', zoom: 0.75 }}>
                 <div className='p-1' style={{ height: '1000px', width: '1000px' }}>
-                    {Object.values(reactObjects)}
+                    {Object.values(objects)}
                 </div>
             </div>
         </div>
     }
 
-    generateObjects(pythonObjects, pythonClasses) {
-        let reactObjects = {}
-        Object.keys(pythonObjects).forEach(ref => reactObjects[ref] = this.renderObject(pythonObjects[ref], pythonClasses))
-        return reactObjects
+    generateObjects(locals) {
+        let objects = {}
+        Object.keys(locals.objects).forEach(ref => objects[ref] = this.renderObject(locals.objects[ref], locals))
+        return objects
     }
 
-    renderObject(object, classes) {
+    renderVariableName(name) {
+        return name.substring(1, name.length - 1)
+    }
+
+    renderVariableValue(variable, locals, crop = 8, inside = false) {
+        if (variable instanceof Array) {
+            if (inside) return this.renderObject(locals.objects[variable[0]], locals)
+            // put in link context
+            return '::'
+        }
+        variable = variable.toString()
+        return variable.length > crop ? variable.substring(0, crop - 2) + '..' : variable
+    }
+
+    renderObject(object, locals) {
+        let isUserDefinedInstance = locals.classes.indexOf(object.type) !== -1
+        let isHorizontalListed = ['list', 'tuple', 'set', 'frozenset'].indexOf(object.type) !== -1
+        let isOnlyValueShowed = ['set', 'frozenset'].indexOf(object.type) !== -1
         let {
             _style = {},
             _varStyle = {},
-            _varHides = []
+            _varHides = [],
+            _varInside = []
         } = object.injects
 
-        return <div className='d-inline-block border p-1 btn-primary' style={{ ..._style }}>
-            <h5>{object.type}</h5>
-            <div>{
-                Object.values(object.members)
-                    .filter(([name, _]) => _varHides.indexOf(name.substring(1, name.length - 1)) === -1)
-                    .map(([name, value]) =>
-                        <div
-                            className={
-                                ['dict', 'type'].indexOf(object.type) !== -1 || classes.indexOf(object.type) !== -1
-                                    ? 'd-block p-1' : 'd-inline p-1'
-                            }
-                            style={{ ..._varStyle[name.substring(1, name.length - 1)] }}
-                        >
-                            {!object.type.endsWith('set') ? <small>{name + ' '}</small> : null}
-                            {value instanceof Array ? '::' : value}
-                        </div>
-                    )
-            }</div>
+        let header = <h5>{object.type}</h5>
+        let contents = Object.values(object.members)
+            .filter(([name, _]) => !isUserDefinedInstance || _varHides.indexOf(this.renderVariableName(name)) === -1)
+            .map(([name, value]) => {
+                let varName = isUserDefinedInstance ? this.renderVariableName(name) : this.renderVariableValue(name)
+                let varValue = this.renderVariableValue(
+                    value,
+                    locals,
+                    undefined,
+                    isUserDefinedInstance && _varInside.indexOf(varName) !== -1
+                )
+                return <div
+                    className={isHorizontalListed ? 'd-inline p-1' : 'd-block p-1'}
+                    style={isUserDefinedInstance ? { ..._varStyle[this.renderVariableName(name)] } : null}
+                >
+                    {!isOnlyValueShowed ? <span>{varName + ': '}</span> : null}
+                    {varValue}
+                </div>
+            })
+
+        return <div
+            className='d-inline-block border p-1 btn-primary'
+            style={isUserDefinedInstance ? { ..._style } : null}
+        >
+            {header}
+            {contents}
         </div>
     }
 
