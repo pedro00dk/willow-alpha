@@ -322,13 +322,14 @@ class TracerProcess:
         if ref not in objects:
             members = []
             injects = {}
-            if isinstance(obj, (tuple, list, set, frozenset)):
+            if isinstance(obj, (list, tuple, set)):
                 members = enumerate(obj)
             elif isinstance(obj, dict):
                 members = obj.items()
             elif isinstance(obj, type):
                 members = [(name, value) for name, value in vars(obj).items() if not name.startswith('_')]
-                classes.add(obj)
+                if obj not in {list, tuple, set, dict}:
+                    classes.add(obj)
             elif isinstance(obj, (*classes,)):
                 members = [(name, value) for name, value in vars(obj).items() if not name.startswith('_')]
                 injects = {name: value for name, value in vars(obj).items() if name.startswith('_')}
