@@ -11,8 +11,7 @@ export default class Header extends React.Component {
     componentDidMount() {
         let { dispatch, exercise, user } = this.props
 
-        if (!exercise.isFetching && exercise.exercises.length === 0 && exercise.err === undefined)
-            dispatch(fetchExercises())
+        if (!exercise.isFetching && exercise.exercises.length === 0) dispatch(fetchExercises())
         if (!user.isFetching) dispatch(fetchUser())
         dispatch(fetchLoginAddress())
     }
@@ -20,13 +19,13 @@ export default class Header extends React.Component {
     render() {
         let { dispatch } = this.props
 
-        return <nav className='navbar navbar-expand navbar-light bg-light' {...this.props}>
+        return <nav className='navbar navbar-expand navbar-light bg-light'>
             <a className='navbar-brand' href='#' onClick={() => dispatch(selectExercise(null))}>
                 Willow
             </a>
             <button className='navbar-toggler' type='button' data-toggle='collapse' data-target='#headerContent'
                 aria-controls='headerContent' aria-expanded='false' aria-label='Toggle navigation'>
-                <span className='navbar-toggler-icon'></span>
+                <span className='navbar-toggler-icon' />
             </button>
             <div className='collapse navbar-collapse' id='headerContent'>
                 <ul className='navbar-nav mr-auto'>
@@ -50,32 +49,21 @@ export default class Header extends React.Component {
     renderExercisesOptions() {
         let { dispatch, exercise } = this.props
 
-        if (exercise.isFetching)
-            return <a className='dropdown-item' href='#'>
-                Loading...
-            </a>
-        if (!exercise.exercises)
-            return <a className='dropdown-item' href='#'>
-                Failed to load
-            </a>
-        if (exercise.exercises.length === 0)
-            return <a className='dropdown-item' href='#'>
-                No exercises found
-            </a>
-        return exercise.exercises.map((exercise, i) =>
-            <a className='dropdown-item' href='#' onClick={() => dispatch(selectExercise(exercise.id))}>
-                {exercise.name}
-            </a>
-        )
+        if (exercise.isFetching) return <a className='dropdown-item' href='#'>Loading...</a>
+        if (!exercise.exercises) return <a className='dropdown-item' href='#'>Failed to load</a>
+        if (exercise.exercises.length === 0) return <a className='dropdown-item' href='#'>No exercises found</a>
+        return exercise.exercises
+            .map((exercise, i) =>
+                <a className='dropdown-item' href='#' onClick={() => dispatch(selectExercise(exercise.id))}>
+                    {exercise.name}
+                </a>
+            )
     }
 
     renderUserOptions() {
         let { dispatch, user } = this.props
 
-        if (user.isFetching)
-            return <li className='nav-item'>
-                Loading
-            </li>
+        if (user.isFetching) return <li className='nav-item'>Loading</li>
         if (!user.id)
             return <li className='nav-item active'>
                 <a className='nav-link' href={user.link ? user.link : '#'}>
