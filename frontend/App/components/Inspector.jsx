@@ -1,9 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
-
 import Draggable from 'react-draggable'
-import FauxDOM from 'react-faux-dom'
-import * as d3 from 'd3'
 
 import { setObjectsContext } from '../reducers/inspector'
 
@@ -34,7 +31,7 @@ export default class Inspector extends React.Component {
             </div>
             <div className='col-9 m-0 p-1 h-100 border' style={{ overflow: 'auto', zoom: 0.75 }}>
                 <div className='p-1' style={{ height: '1000px', width: '1000px' }}>
-                    {referencedObjects}
+                    {referencedObjects.map(object => <Draggable bounds='parent'>{object}</Draggable>)}
                 </div>
             </div>
         </div>
@@ -160,108 +157,5 @@ export default class Inspector extends React.Component {
         }
         variable = variable.toString()
         return variable.length > crop ? variable.substring(0, crop - 2) + '..' : variable
-    }
-
-
-
-
-    asdfrenderHeap() {
-        let { debug } = this.props
-
-        let frameResponses = debug.responses.filter(response => response.event === 'frame')
-        if (frameResponses.length === 0) return null
-
-        let lastFrameResponse = frameResponses.slice(-1)[0]
-        let objects = Object.values(lastFrameResponse.value.locals.objects).map(
-            object => this.renderHeapObject(object, lastFrameResponse.value.locals.usercls)
-        )
-
-        return <div className='w-100 h-100' style={{ overflow: 'auto' }}>
-            <div className='p-1' style={{ height: '1000px', width: '1000px' }}>
-                {objects}
-            </div>
-        </div>
-    }
-
-    rasdfenderHeapObject(object, userClasses) {
-        if (object.type === 'tuple' || object.type === 'list') {
-            return <Draggable bounds="parent">
-                <div className="border p-2 btn-primary" style={{ display: "inline-block" }}>
-                    <h5>{object.type}</h5>
-                    <div>{
-                        Object.values(object.members).map(
-                            (value, i) => <div className='p-1' style={{ display: 'inline' }}>
-                                <sup><small>{value[0] + ' '}</small></sup>{value[1] instanceof Array ? '::' : value[1]}
-                            </div>
-                        )
-                    }</div>
-                </div>
-            </Draggable>
-        } else if (object.type === 'dict') {
-            return <Draggable bounds="parent">
-                <div className="border p-2 btn-primary" style={{ display: "inline-block" }}>
-                    <h5>{object.type}</h5>
-                    <div>{
-                        Object.values(object.members).map(
-                            (value, i) => <div className='p-1' style={{ display: 'block' }}>
-                                <small>{value[0] instanceof Array ? '::' : value[0] + ' '}</small>{value[1] instanceof Array ? '::' : value[1]}
-                            </div>
-                        )
-                    }</div>
-                </div>
-            </Draggable>
-        } else if (object.type === 'set') {
-            let boxSide = Math.ceil(Math.sqrt(object.members.length))
-            return <Draggable bounds="parent">
-                <div className="border p-2 btn-primary" style={{ display: "inline-block" }}>
-                    <h5>{object.type}</h5>
-                    <div>{
-                        Array(boxSide).fill().map((_, i) => {
-                            return <div className='p-1' style={{ display: 'block' }}>{
-                                Array(boxSide).fill().map((_, j) => {
-                                    return <div className='p-1' style={{ display: 'inline' }}>{
-                                        (i * boxSide + j) < object.members.length
-                                            ? object.members[(i * boxSide + j)][1] instanceof Array ? '::' : object.members[(i * boxSide + j)][1]
-                                            : null
-                                    } </div>
-                                })
-                            }</div>
-                        })
-                    }</div>
-                </div>
-            </Draggable>
-        } else if (userClasses.indexOf(object.type) >= 0) {
-            let style = object.members.filter(member => member[0] == '\'style\'')[0]
-            return <Draggable bounds="parent">
-                <div className="border p-2 btn-primary" style={{ ...style, display: "inline-block" }}>
-                    <h5>{object.type}</h5>
-                    <div>{
-                        Object.values(object.members).filter(member => member[0] !== '\'style\'').map(
-                            (value, i) => <div className='p-1' style={{ display: 'block' }}>
-                                <small>{value[0].substring(1, value[0].length - 1) + ' '}</small>{value[1] instanceof Array ? '::' : value[1]}
-                            </div>
-                        )
-                    }</div>
-                </div>
-            </Draggable>
-        }
-    }
-
-    renderPaths() {
-        let dom = new FauxDOM.Element('div')
-        let svg = d3.select(dom).append('svg')
-            .attr('width', 200)
-            .attr('height', 200)
-
-        let lineGenerator = d3.line().curve(d3.curveCardinal)
-        let points = [
-            [0, 80],
-            [100, 100],
-            [200, 30]
-        ]
-        var pathData = lineGenerator(points)
-        svg.append('path').attr('d', pathData).style('fill', null)
-
-        return dom.toReact()
     }
 }
