@@ -334,9 +334,11 @@ class TracerProcess:
                 injects = {name: value for name, value in vars(obj).items() if name.startswith('_')}
             else:  # not introspected types
                 return f'{type(obj).__name__}'
+            objects[ref] = {'type': type(obj).__name__, 'ref': ref}
             walk_members = [(self.walk_object(name, objects, classes), self.walk_object(value, objects, classes))
                             for name, value in members]
-            objects[ref] = {'type': type(obj).__name__, 'ref': ref, 'members': walk_members, 'injects': injects}
+            objects[ref].update({'members': walk_members, 'injects': injects})
+
         return ref,
 
 
