@@ -310,8 +310,8 @@ class TracerProcess:
             frame_name = frame.f_code.co_name
             variables = [(name, self.walk_object(frame_locals[name], objects, classes))
                          for name, value in frame_locals.items() if not name.startswith('_')]
-            injects = [(name, value) for name, value in frame_locals.items()
-                       if name.startswith('_') and not name.endswith('_')]
+            injects = {name: value for name, value in frame_locals.items()
+                       if name.startswith('_') and not name.endswith('_')}
             stack.append({'name': frame_name, 'variables': variables, 'injects': injects})
         return {'objects': objects, 'classes': [c.__name__ for c in classes],  'stack': stack[::-1]}
 
