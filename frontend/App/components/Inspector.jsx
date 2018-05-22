@@ -47,7 +47,12 @@ export default class Inspector extends React.Component {
 
     renderVariableValue(variable, locals, crop = 8, inside = false) {
         if (variable instanceof Array) {
-            if (inside) return this.renderObject(locals.objects[variable[0]], locals)
+            if (inside) {
+                let object = locals.objects[variable[0]]
+                let isUserDefinedInstance = locals.classes.indexOf(object.type) !== -1
+                if (!isUserDefinedInstance) return this.renderObject(object, locals)
+                // inside rendering only works with user objects containing python objects
+            }
             // put in link context
             return '::'
         }
@@ -56,9 +61,10 @@ export default class Inspector extends React.Component {
     }
 
     renderObject(object, locals) {
+        console.log(locals.classes)
         let isUserDefinedInstance = locals.classes.indexOf(object.type) !== -1
-        let isHorizontalListed = ['list', 'tuple', 'set', 'frozenset'].indexOf(object.type) !== -1
-        let isOnlyValueShowed = ['set', 'frozenset'].indexOf(object.type) !== -1
+        let isHorizontalListed = ['list', 'tuple', 'set'].indexOf(object.type) !== -1
+        let isOnlyValueShowed = object.type == 'set'
         let {
             _style = {},
             _varStyle = {},
@@ -70,7 +76,9 @@ export default class Inspector extends React.Component {
         let contents = Object.values(object.members)
             .filter(([name, _]) => !isUserDefinedInstance || _varHides.indexOf(this.renderVariableName(name)) === -1)
             .map(([name, value]) => {
-                let varName = isUserDefinedInstance ? this.renderVariableName(name) : this.renderVariableValue(name)
+                let varName = isUserDefinedInstance
+                    ? this.renderVariableName(name)
+                    : this.renderVariableValue(name, locals)
                 let varValue = this.renderVariableValue(
                     value,
                     locals,
@@ -81,7 +89,7 @@ export default class Inspector extends React.Component {
                     className={isHorizontalListed ? 'd-inline p-1' : 'd-block p-1'}
                     style={isUserDefinedInstance ? { ..._varStyle[this.renderVariableName(name)] } : null}
                 >
-                    {!isOnlyValueShowed ? <span>{varName + ': '}</span> : null}
+                    {!isOnlyValueShowed ? varName + ': ' : null}
                     {varValue}
                 </div>
             })
@@ -174,7 +182,7 @@ export default class Inspector extends React.Component {
                     }</div>
                 </div>
             </Draggable>
-        } else if (object.type === 'set' || object.type === 'frozenset') {
+        } else if (object.type === 'set') {
             let boxSide = Math.ceil(Math.sqrt(object.members.length))
             return <Draggable bounds="parent">
                 <div className="border p-2 btn-primary" style={{ display: "inline-block" }}>
