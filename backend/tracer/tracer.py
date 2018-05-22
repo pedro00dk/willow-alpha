@@ -326,20 +326,17 @@ class TracerProcess:
                 members = enumerate(obj)
             elif isinstance(obj, dict):
                 members = obj.items()
-            elif isinstance(obj, type):
-                members = [(name, value) for name, value in vars(obj).items() if not name.startswith('_')]
-                if obj not in {list, tuple, set, dict}:
-                    classes.add(obj)
             elif isinstance(obj, (*classes,)):
                 members = [(name, value) for name, value in vars(obj).items() if not name.startswith('_')]
                 injects = {name: value for name, value in vars(obj).items() if name.startswith('_')}
             else:  # not introspected types
+                if isinstance(obj, type) and obj not in {list, tuple, set, dict}:
+                    classes.add(obj)
                 return f'{type(obj).__name__}'
             objects[ref] = {'type': type(obj).__name__, 'ref': ref}
             walk_members = [(self.walk_object(name, objects, classes), self.walk_object(value, objects, classes))
                             for name, value in members]
             objects[ref].update({'members': walk_members, 'injects': injects})
-
         return ref,
 
 
