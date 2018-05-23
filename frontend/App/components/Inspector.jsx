@@ -2,50 +2,97 @@ import React from 'react'
 import { connect } from 'react-redux'
 import Draggable from 'react-draggable'
 
-import { setObjectsContext } from '../reducers/inspector'
+import { setObjectContext, objectDrag } from '../reducers/inspector'
+import { isNullOrUndefined } from 'util';
 
 
 @connect(state => ({ debug: state.debug }))
 export default class Inspector extends React.Component {
 
+    constructor(props) {
+        super(props)
+    }
+
+    componentDidUpdate() {
+        let { dispatch } = this.props
+
+        dispatch(
+            setObjectContext(
+                this.heapObjectsReferences,
+                this.heapVariableReferences,
+                this.stackVariableReferences
+            )
+        )
+    }
+
     render() {
-        let { debug } = this.props
+        let { dispatch, debug } = this.props
 
         let frameResponses = debug.responses.filter(response => response.event === 'frame')
         if (frameResponses.length === 0) return null
 
         let lastFrameResponse = frameResponses.slice(-1)[0]
-        let { heapObjects, heapReferences } = this.generateHeapObjectsAndReferences(lastFrameResponse.value.locals)
-        let { stackFrames, stackReferences } = this.generateStackFramesAndReferences(lastFrameResponse.value.locals)
+        let {
+            reactObjects,
+            heapObjectsReferences,
+            heapVariableReferences
+        } = this.generateHeapObjectsAndReferences(lastFrameResponse.value.locals)
+        let {
+            reactFrames,
+            stackVariableReferences
+        } = this.generateStackFramesAndReferences(lastFrameResponse.value.locals)
 
-        let referencedObjects = Object.keys(heapObjects)
+        let referencedReactObjects = Object.keys(reactObjects)
             .filter(ref =>
-                heapReferences[ref] && heapReferences[ref].count > 0 ||
-                stackReferences[ref] && stackReferences[ref].count > 0
+                heapVariableReferences[ref] && heapVariableReferences[ref].count > 0 ||
+                stackVariableReferences[ref] && stackVariableReferences[ref].count > 0
             )
-            .map(ref => heapObjects[ref])
-        //{stackFrames}
+            .map(ref => reactObjects[ref])
+
+        this.heapObjectsReferences = heapObjectsReferences
+        this.heapVariableReferences = heapVariableReferences
+        this.stackVariableReferences = stackVariableReferences
+
         return <div className='row m-0 p-0 h-100'>
+            <InspectorPathDrawer />
             <div className='col-3 m-0 p-1 h-100 border'>
-                {stackFrames}
+                {reactFrames}
             </div>
             <div className='col-9 m-0 p-1 h-100 border' style={{ overflow: 'auto', zoom: 0.75 }}>
                 <div className='p-1' style={{ height: '1000px', width: '1000px' }}>
-                    {referencedObjects.map(object => <Draggable bounds='parent'>{object}</Draggable>)}
+                    {
+                        referencedReactObjects.map(object =>
+                            <Draggable onDrag={event => dispatch(objectDrag())} bounds='parent'>
+                                {object}
+                            </Draggable>
+                        )
+                    }
                 </div>
             </div>
         </div>
     }
 
     generateHeapObjectsAndReferences(locals) {
-        let objects = {}
-        let references = {}
+        let reactObjects = {}
+        let heapObjectsReferences = {}
+        let heapVariableReferences = {}
         Object.keys(locals.objects)
-            .forEach(ref => objects[ref] = this.generateObject(locals.objects[ref], locals, references))
-        return { heapObjects: objects, heapReferences: references }
+            .forEach(ref =>
+                reactObjects[ref] = this.generateObject(
+                    locals.objects[ref],
+                    locals,
+                    heapObjectsReferences,
+                    heapVariableReferences
+                )
+            )
+        return {
+            reactObjects: reactObjects,
+            heapObjectsReferences: heapObjectsReferences,
+            heapVariableReferences: heapVariableReferences
+        }
     }
 
-    generateObject(object, locals, references) {
+    generateObject(object, locals, objectsReferences, variableReferences) {
         let isUserDefinedInstance = locals.classes.indexOf(object.type) !== -1
         let isHorizontalListed = ['list', 'tuple', 'set'].indexOf(object.type) !== -1
         let isOnlyValueShowed = object.type == 'set'
@@ -62,11 +109,11 @@ export default class Inspector extends React.Component {
             .map(([name, value]) => {
                 let varName = isUserDefinedInstance
                     ? this.generateVariableName(name)
-                    : this.generateVariableValue(name, locals, references)
+                    : this.generateVariableValue(name, locals, variableReferences)
                 let varValue = this.generateVariableValue(
                     value,
                     locals,
-                    references,
+                    variableReferences,
                     undefined,
                     isUserDefinedInstance && _varInside.indexOf(varName) !== -1
                 )
@@ -86,6 +133,7 @@ export default class Inspector extends React.Component {
         return <div
             className='d-inline-block border p-1 btn-primary'
             style={isUserDefinedInstance ? { ..._style } : null}
+            ref={ref => objectsReferences ? objectsReferences[object.ref] = ref : null}
         >
             <h5>{object.type}</h5>
             {contents}
@@ -93,14 +141,14 @@ export default class Inspector extends React.Component {
     }
 
     generateStackFramesAndReferences(locals) {
-        let frames = []
-        let references = {}
+        let reactFrames = []
+        let stackVariableReferences = {}
         Object.values(locals.stack)
-            .forEach(frame => frames.push(this.generateFrame(frame, locals, references)))
-        return { stackFrames: frames, stackReferences: references }
+            .forEach(frame => reactFrames.push(this.generateFrame(frame, locals, stackVariableReferences)))
+        return { reactFrames: reactFrames, stackVariableReferences: stackVariableReferences }
     }
 
-    generateFrame(frame, locals, references) {
+    generateFrame(frame, locals, variableReferences) {
         let {
             _style = {},
             _varsStyle = {},
@@ -115,7 +163,7 @@ export default class Inspector extends React.Component {
                 let varValue = this.generateVariableValue(
                     value,
                     locals,
-                    references,
+                    variableReferences,
                     undefined,
                     _varInside.indexOf(name) !== -1
                 )
@@ -142,20 +190,63 @@ export default class Inspector extends React.Component {
         return name.substring(1, name.length - 1)
     }
 
-    generateVariableValue(variable, locals, references, crop = 8, inside = false) {
+    generateVariableValue(variable, locals, variableReferences, crop = 8, inside = false) {
         if (variable instanceof Array) {
             if (inside) {
                 let object = locals.objects[variable[0]]
                 let isUserDefinedInstance = locals.classes.indexOf(object.type) !== -1
-                if (!isUserDefinedInstance) return this.generateObject(object, locals)
+                if (!isUserDefinedInstance) return this.generateObject(object, locals, undefined, variableReferences)
                 // inside rendering only works with user objects containing python objects
             }
             // lazily puts spawn reference in references map
-            if (references[variable[0]] === undefined) references[variable[0]] = { count: 0, spans: [] }
-            references[variable[0]].count++
-            return <span ref={ref => references[variable[0]].spans.push(ref)}>::</span>
+            if (variableReferences[variable[0]] === undefined) variableReferences[variable[0]] = { count: 0, spans: [] }
+            variableReferences[variable[0]].count++ // count can used before the lazy spans reference push 
+            return <span ref={ref => variableReferences[variable[0]].spans.push(ref)}>::</span>
         }
         variable = variable.toString()
         return variable.length > crop ? variable.substring(0, crop - 2) + '..' : variable
+    }
+}
+
+
+@connect(state => ({ inspector: state.inspector }))
+class InspectorPathDrawer extends React.Component {
+
+    render() {
+        let { inspector } = this.props
+        let {
+            heapObjectsReferences,
+            heapVariableReferences,
+            stackVariableReferences
+        } = inspector
+
+        let paths = this.generatePaths(heapObjectsReferences, heapVariableReferences, stackVariableReferences)
+        console.log(paths)
+
+        return null
+        return <svg width='5000' height='5000' viewBox='0 0 5000 5000'>
+        </svg>
+    }
+
+    generatePaths(heapObjectsReferences, heapVariableReferences, stackVariableReferences) {
+        if (!heapObjectsReferences || !heapVariableReferences || !stackVariableReferences) return []
+        let objectsBoundRects = {}
+        Object.keys(heapObjectsReferences)
+            .forEach(ref => objectsBoundRects[ref] = heapObjectsReferences[ref].getBoundingClientRect())
+
+        let paths = []
+        Object.keys(heapVariableReferences)
+            .forEach(ref => {
+                heapVariableReferences[ref].spans
+                    .filter(span => !isNullOrUndefined(span))
+                    .forEach(span => paths.push([span.getBoundingClientRect(), objectsBoundRects[ref]]))
+            })
+        Object.keys(stackVariableReferences)
+            .forEach(ref => {
+                stackVariableReferences[ref].spans
+                    .filter(span => !isNullOrUndefined(span))
+                    .forEach(span => paths.push([span.getBoundingClientRect(), objectsBoundRects[ref]]))
+            })
+        return paths
     }
 }
