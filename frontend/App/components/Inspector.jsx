@@ -54,7 +54,6 @@ export default class Inspector extends React.Component {
         this.stackVariableReferences = stackVariableReferences
 
         return <div className='row m-0 p-0 h-100'>
-            <InspectorPathDrawer />
             <div className='col-3 m-0 p-1 h-100 border'>
                 {reactFrames}
             </div>
@@ -68,6 +67,9 @@ export default class Inspector extends React.Component {
                         )
                     }
                 </div>
+            </div>
+            <div className='p-fixed' style={{position: 'fixed', top: 0, left: 0, zIndex: -1, pointerEvents: 'none' }}>
+                <InspectorPathDrawer />
             </div>
         </div>
     }
@@ -220,15 +222,15 @@ class InspectorPathDrawer extends React.Component {
             stackVariableReferences
         } = inspector
 
-        let paths = this.generatePaths(heapObjectsReferences, heapVariableReferences, stackVariableReferences)
-        console.log(paths)
+        let pathsDs = this.generatePathsDs(heapObjectsReferences, heapVariableReferences, stackVariableReferences)
+        console.log(pathsDs)
 
-        return null
-        return <svg width='5000' height='5000' viewBox='0 0 5000 5000'>
+        return <svg width='1000' height='1000' viewBox='0 0 1000 1000'>
+            {pathsDs.map(d => <path d={d} stroke='black' z="1" fill='transparent' />)}
         </svg>
     }
 
-    generatePaths(heapObjectsReferences, heapVariableReferences, stackVariableReferences) {
+    generatePathsDs(heapObjectsReferences, heapVariableReferences, stackVariableReferences) {
         if (!heapObjectsReferences || !heapVariableReferences || !stackVariableReferences) return []
         let objectsBoundRects = {}
         Object.keys(heapObjectsReferences)
@@ -247,6 +249,10 @@ class InspectorPathDrawer extends React.Component {
                     .filter(span => !isNullOrUndefined(span))
                     .forEach(span => paths.push([span.getBoundingClientRect(), objectsBoundRects[ref]]))
             })
-        return paths
+        return paths.map(([refBB, objBB]) => {
+            let fromX = (refBB.left + refBB.right) / 2
+            let fromY = (refBB.top + refBB.bottom) / 2
+            return `M ${fromX} ${fromY} L ${objBB.left} ${objBB.top}`
+        })
     }
 }
