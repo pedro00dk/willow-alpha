@@ -21,7 +21,7 @@ export default class ScriptEditor extends React.Component {
         let onUpdate = editor => {
             let { script } = this.props
 
-            if (script.markers.length > 0) editor.scrollToLine(script.markers.slice(-1)[0], true, true, () => { })
+            if (script.markers.length > 0) editor.scrollToLine(script.markers.slice(-1)[0].line, true, true, () => { })
         }
 
         return <TextEditor
