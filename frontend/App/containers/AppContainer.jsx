@@ -59,7 +59,7 @@ export default class AppContainer extends React.Component {
                 split={'vertical'}
                 minSize={'5%'}
                 maxSize={'95%'}
-                defaultSize={'20%'}
+                defaultSize={'30%'}
                 className={'border'}
                 resizerClassName={'border'}
                 style={{ height: '85vh' }}
