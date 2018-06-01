@@ -1,6 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import Draggable from 'react-draggable'
+import SplitPane from 'react-split-pane'
 
 import { setObjectContext, objectDrag } from '../reducers/inspector'
 import { isNullOrUndefined } from 'util';
@@ -53,24 +54,31 @@ export default class Inspector extends React.Component {
         this.heapVariableReferences = heapVariableReferences
         this.stackVariableReferences = stackVariableReferences
 
-        return <div className='row m-0 p-0 h-100'>
-            <div className='col-3 m-0 p-1 h-100 border'>
+        return <div>
+            <SplitPane
+                split={'vertical'}
+                minSize={'5%'}
+                maxSize={'95%'}
+                defaultSize={'20%'}
+                className={'border'}
+                resizerClassName={'border'}
+            >
                 {reactFrames}
-            </div>
-            <div className='col-9 m-0 p-1 h-100 border' style={{ overflow: 'auto', zoom: 0.75 }}>
-                <div className='p-1' style={{ height: '1000px', width: '1000px' }}>
-                    {
+                <div style={{ overflow: 'auto' }}>
+                    <div style={{ height: '3000px', width: '3000px' }}>{
                         referencedReactObjects.map(object =>
-                            <Draggable onDrag={event => dispatch(objectDrag())} bounds='parent'>
+                            <Draggable
+                                onDrag={event => dispatch(objectDrag())}
+                                bounds={'parent'}
+                                style={{ opacity: 0.7 }}
+                            >
                                 {object}
                             </Draggable>
                         )
-                    }
+                    }</div>
                 </div>
-            </div>
-            <div className='p-fixed' style={{position: 'fixed', top: 0, left: 0, zIndex: -1, pointerEvents: 'none' }}>
-                <InspectorPathDrawer />
-            </div>
+            </SplitPane>
+            <InspectorPathDrawer />
         </div>
     }
 
@@ -123,8 +131,8 @@ export default class Inspector extends React.Component {
                     className={(isHorizontalListed ? 'd-table-cell' : 'd-table-column') + ' align-top p-1'}
                     style={
                         isUserDefinedInstance
-                            ? { ..._varsStyle, ..._varStyle[this.generateVariableName(name)] }
-                            : null
+                            ? { 'opacity': 0.7, ..._varsStyle, ..._varStyle[this.generateVariableName(name)] }
+                            : { 'opacity': 0.7 }
                     }
                 >
                     <span className='align-top'>{!isOnlyValueShowed ? varName + ': ' : null}</span>
@@ -175,7 +183,9 @@ export default class Inspector extends React.Component {
                 </tr>
             })
 
-        return <table className='table table-sm table-hover table-striped table-bordered' style={{ ..._style }}>
+        return <table
+            className='table table-sm table-hover table-striped table-bordered'
+            style={{ 'opacity': 0.7, ..._style }}>
             <thead className='thead-light'>
                 <tr>
                     <th scope='col'>{frame.name}</th>
@@ -214,6 +224,21 @@ export default class Inspector extends React.Component {
 @connect(state => ({ inspector: state.inspector }))
 class InspectorPathDrawer extends React.Component {
 
+    componentWillMount() {
+        this.updater = window.setInterval(
+            () => {
+                let { dispatch, inspector } = this.props
+
+                if (dispatch && inspector) dispatch(objectDrag())
+            },
+            100
+        )
+    }
+
+    componentWillUnmount() {
+        window.clearInterval(this.updater)
+    }
+
     render() {
         let { inspector } = this.props
         let {
@@ -223,9 +248,8 @@ class InspectorPathDrawer extends React.Component {
         } = inspector
 
         let pathsDs = this.generatePathsDs(heapObjectsReferences, heapVariableReferences, stackVariableReferences)
-        console.log(pathsDs)
 
-        return <svg width='1000' height='1000' viewBox='0 0 1000 1000'>
+        return <svg className='position-fixed' style={{ left: 0, top: 0, zIndex: -1 }} width='100vw' height='100vh'>
             {pathsDs.map(d => <path d={d} stroke='black' z="1" fill='transparent' />)}
         </svg>
     }
