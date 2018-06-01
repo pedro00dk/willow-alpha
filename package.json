@@ -22,7 +22,6 @@
     },
     "dependencies": {
         "brace": "^0.11.1",
-        "d3": "^5.0.0",
         "es6-promise": "^3.1.2",
         "js-cookie": "^2.2.0",
         "react-cookie": "^0.4.5",
@@ -31,7 +30,7 @@
         "react-faux-dom": "^4.1.0",
         "react-measure": "^2.0.2",
         "react-redux": "^4.4.0",
-        "react-svg-pathline": "^0.5.0",
+        "react-split-pane": "^0.1.77",
         "redux": "^3.3.1",
         "redux-thunk": "^1.0.3"
     }

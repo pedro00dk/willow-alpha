@@ -1,5 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
+import SplitPane from 'react-split-pane'
 
 import DebugBar from '../components/DebugBar'
 import Header from '../components/Header'
@@ -51,48 +52,41 @@ export default class AppContainer extends React.Component {
             )
         }
 
-        return <div className='container-fluid p-0'>
-            <Header style={{ height: '3em' }} />
-            <div className='row mx-0' style={{ height: '3em' }}>
-                <div className='col-12'>
-                    <DebugBar />
-                </div>
-            </div>
-            <div className='row mx-0' style={{ height: '24em' }}>
-                <div className='col-5'>
-                    <div className='w-100 h-100 border'>
-                        <ScriptEditor />
-                    </div>
-                    {/*<nav>
-                        <div className='nav nav-tabs' id='nav-tab' role='tablist'>
-                            {tabs}
-                        </div>
-                    </nav>
-                    <div className='tab-content' id='nav-tabContent'>
-                        {contents}
-                    </div>
-                    */}
-                </div>
-                <div className='col-7'>
-                    <div className='w-100 h-100 border'>
-                        <Inspector />
-                    </div>
-                </div>
-            </div>
-            <div className='row mx-0' style={{ height: '10em' }}>
-                <div className='col-5'>
-                    <span className='ml-3 h6 text-dark'>Input</span>
-                    <div className='w-100 h-100 border'>
+        return <div>
+            <Header />
+            <DebugBar />
+            <SplitPane
+                split={'vertical'}
+                minSize={'5%'}
+                maxSize={'95%'}
+                defaultSize={'20%'}
+                className={'border'}
+                resizerClassName={'border'}
+                style={{ height: '85vh' }}
+            >
+                <ScriptEditor />
+                <SplitPane
+                    split={'horizontal'}
+                    minSize={'5%'}
+                    maxSize={'95%'}
+                    defaultSize={'80%'}
+                    className={'border'}
+                    resizerClassName={'border'}
+                >
+                    <Inspector />
+                    <SplitPane
+                        split={'vertical'}
+                        minSize={'5%'}
+                        maxSize={'95%'}
+                        defaultSize={'50%'}
+                        className={'border'}
+                        resizerClassName={'border'}
+                    >
                         <InputEditor />
-                    </div>
-                </div>
-                <div className='col-7'>
-                    <span className='ml-3 h6 text-dark'>Output</span>
-                    <div className='w-100 h-100 border'>
                         <OutputEditor />
-                    </div>
-                </div>
-            </div>
+                    </SplitPane>
+                </SplitPane>
+            </SplitPane>
         </div>
     }
 }

@@ -18,7 +18,9 @@ class App extends React.Component {
 
     render() {
         return <Provider store={store}>
-            <AppContainer />
+            <div style={{ width: '100vw', height: '100vh' }}>
+                <AppContainer />
+            </div>
         </Provider>
     }
 }
