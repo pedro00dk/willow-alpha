@@ -17,9 +17,9 @@ export default class Header extends React.Component {
     }
 
     render() {
-        let { dispatch } = this.props
+        let { dispatch, style } = this.props
 
-        return <nav className='navbar navbar-expand navbar-light bg-light' style={{ height: '7.5vh' }}>
+        return <nav className='navbar navbar-expand navbar-light bg-light' style={style}>
             <a className='navbar-brand' href='#' onClick={() => dispatch(selectExercise(null))}>
                 Willow
             </a>

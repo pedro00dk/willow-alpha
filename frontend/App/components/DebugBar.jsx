@@ -185,7 +185,8 @@ export default class DebugBar extends React.Component {
     }
 
     render() {
-        return <div style={{ height: '7.5vh' }}>
+        let { style } = this.props
+        return <div style={style}>
             <img src={playBtn} className='h-100'
                 style={{ cursor: 'pointer', filter: this.isPlayAvailable() ? null : 'grayscale(80%)' }}
                 onClick={this.play} />

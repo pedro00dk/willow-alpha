@@ -53,8 +53,8 @@ export default class AppContainer extends React.Component {
         }
 
         return <div>
-            <Header />
-            <DebugBar />
+            <Header style={{ height: '7.5vh' }} />
+            <DebugBar style={{ height: '7.5vh' }} />
             <SplitPane
                 split={'vertical'}
                 minSize={'5%'}
