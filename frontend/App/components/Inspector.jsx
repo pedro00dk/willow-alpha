@@ -17,6 +17,12 @@ export default class Inspector extends React.Component {
         )
     }
 
+    shouldComponentUpdate(nextProps, nextState) {
+        let { debug } = nextProps
+
+        return !debug.isFetching
+    }
+
     render() {
         let { dispatch, debug } = this.props
         let frameResponses = debug.responses.filter(response => response.event === 'frame')
