@@ -90,7 +90,7 @@ class UserAPIView(views.APIView):
 
 class TracerAPIView(views.APIView):
 
-    permission_classes = permissions.IsAuthenticated,
+    permission_classes = permissions.AllowAny,
     user_tracers = {}
 
     def post(self, request):
