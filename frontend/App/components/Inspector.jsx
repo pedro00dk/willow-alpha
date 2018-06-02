@@ -28,14 +28,13 @@ export default class Inspector extends React.Component {
         let { dispatch, debug } = this.props
 
         let frameResponses = debug.responses.filter(response => response.event === 'frame')
-        if (frameResponses.length === 0) return null
         let lastFrameResponse = frameResponses.slice(-1)[0]
         let {
             reactObjects, heapObjectsReferences, heapVariableReferences
-        } = this.generateHeapObjectsAndReferences(lastFrameResponse.value.locals)
+        } = this.generateHeapObjectsAndReferences(lastFrameResponse ? lastFrameResponse.value.locals : undefined)
         let {
             reactFrames, stackVariableReferences
-        } = this.generateStackFramesAndReferences(lastFrameResponse.value.locals)
+        } = this.generateStackFramesAndReferences(lastFrameResponse ? lastFrameResponse.value.locals : undefined)
         let referencedReactObjects = Object.keys(reactObjects)
             .filter(ref =>
                 heapVariableReferences[ref] && heapVariableReferences[ref].count > 0 ||
@@ -76,12 +75,15 @@ export default class Inspector extends React.Component {
         let reactObjects = {}
         let heapObjectsReferences = {}
         let heapVariableReferences = {}
-        Object.keys(locals.objects)
-            .forEach(ref =>
-                reactObjects[ref] = this.generateObject(
-                    locals.objects[ref], locals, heapObjectsReferences, heapVariableReferences
+
+        if (locals) {
+            Object.keys(locals.objects)
+                .forEach(ref =>
+                    reactObjects[ref] = this.generateObject(
+                        locals.objects[ref], locals, heapObjectsReferences, heapVariableReferences
+                    )
                 )
-            )
+        }
 
         return {
             reactObjects: reactObjects,
@@ -138,8 +140,11 @@ export default class Inspector extends React.Component {
     generateStackFramesAndReferences(locals) {
         let reactFrames = []
         let stackVariableReferences = {}
-        Object.values(locals.stack)
-            .forEach(frame => reactFrames.push(this.generateFrame(frame, locals, stackVariableReferences)))
+
+        if (locals) {
+            Object.values(locals.stack)
+                .forEach(frame => reactFrames.push(this.generateFrame(frame, locals, stackVariableReferences)))
+        }
 
         return { reactFrames: reactFrames, stackVariableReferences: stackVariableReferences }
     }
