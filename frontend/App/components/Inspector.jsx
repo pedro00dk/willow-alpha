@@ -12,6 +12,7 @@ export default class Inspector extends React.Component {
 
     componentDidUpdate() {
         let { dispatch } = this.props
+
         dispatch(
             setObjectContext(this.heapObjectsReferences, this.heapVariableReferences, this.stackVariableReferences)
         )
@@ -25,6 +26,7 @@ export default class Inspector extends React.Component {
 
     render() {
         let { dispatch, debug } = this.props
+
         let frameResponses = debug.responses.filter(response => response.event === 'frame')
         if (frameResponses.length === 0) return null
         let lastFrameResponse = frameResponses.slice(-1)[0]
@@ -43,6 +45,7 @@ export default class Inspector extends React.Component {
         this.heapObjectsReferences = heapObjectsReferences
         this.heapVariableReferences = heapVariableReferences
         this.stackVariableReferences = stackVariableReferences
+
         return <div>
             <SplitPane
                 split={'vertical'}
@@ -79,6 +82,7 @@ export default class Inspector extends React.Component {
                     locals.objects[ref], locals, heapObjectsReferences, heapVariableReferences
                 )
             )
+
         return {
             reactObjects: reactObjects,
             heapObjectsReferences: heapObjectsReferences,
@@ -90,7 +94,13 @@ export default class Inspector extends React.Component {
         let isUserDefinedInstance = locals.classes.indexOf(object.type) !== -1
         let isHorizontalListed = ['list', 'tuple', 'set'].indexOf(object.type) !== -1
         let isOnlyValueShowed = object.type == 'set'
-        let { _style = {}, _varsStyle = {}, _varStyle = {}, _varHides = [], _varInside = [] } = object.injects
+        let {
+            _style = {},
+            _varsStyle = {},
+            _varStyle = {},
+            _varHides = [],
+            _varInside = []
+        } = object.injects
         let contents = Object.values(object.members)
             .filter(([name, _]) => !isUserDefinedInstance || _varHides.indexOf(this.generateVariableName(name)) === -1)
             .map(([name, value]) => {
@@ -114,6 +124,7 @@ export default class Inspector extends React.Component {
                     <span>{varValue}</span>
                 </div>
             })
+
         return <div
             className='d-inline-block border p-1 btn-primary'
             style={isUserDefinedInstance ? { ..._style } : null}
@@ -129,11 +140,18 @@ export default class Inspector extends React.Component {
         let stackVariableReferences = {}
         Object.values(locals.stack)
             .forEach(frame => reactFrames.push(this.generateFrame(frame, locals, stackVariableReferences)))
+
         return { reactFrames: reactFrames, stackVariableReferences: stackVariableReferences }
     }
 
     generateFrame(frame, locals, variableReferences) {
-        let { _style = {}, _varsStyle = {}, _varStyle = {}, _varHides = [], _varInside = [] } = frame.injects
+        let {
+            _style = {},
+            _varsStyle = {},
+            _varStyle = {},
+            _varHides = [],
+            _varInside = []
+        } = frame.injects
         let contents = Object.values(frame.variables)
             .filter(([name, _]) => _varHides.indexOf(this.generateVariableName(name)) === -1)
             .map(([name, value]) => {
@@ -145,6 +163,7 @@ export default class Inspector extends React.Component {
                     <th scope='col'>{varValue}</th>
                 </tr>
             })
+
         return <table
             className='table table-sm table-hover table-striped table-bordered'
             style={_style}>
@@ -205,6 +224,7 @@ class InspectorPathDrawer extends React.Component {
         let { inspector } = this.props
         let { heapObjectsReferences, heapVariableReferences, stackVariableReferences } = inspector
         let pathsDs = this.generatePathsDs(heapObjectsReferences, heapVariableReferences, stackVariableReferences)
+
         return <svg className='position-fixed' style={{ left: 0, top: 0, zIndex: -1 }} width='100vw' height='100vh'>
             {pathsDs.map((d, i) => <path strokeWidth='3' fill='none' stroke='black' d={d} />)}
         </svg>
@@ -242,10 +262,8 @@ class InspectorPathDrawer extends React.Component {
                 crossX *= -1
                 crossY *= -1
             }
-
             let controlX = middleX + crossX
             let controlY = middleY + crossY
-
             return `M${fromX},${fromY} Q${controlX},${controlY} ${toX},${toY}`
         })
     }
