@@ -200,7 +200,7 @@ class InspectorPathDrawer extends React.Component {
         let { heapObjectsReferences, heapVariableReferences, stackVariableReferences } = inspector
         let pathsDs = this.generatePathsDs(heapObjectsReferences, heapVariableReferences, stackVariableReferences)
         return <svg className='position-fixed' style={{ left: 0, top: 0, zIndex: -1 }} width='100vw' height='100vh'>
-            {pathsDs.map(d => <path d={d} stroke='black' z="1" fill='transparent' />)}
+            {pathsDs.map((d, i) => <path strokeWidth='3' fill='none' stroke='black' d={d} />)}
         </svg>
     }
 
@@ -225,7 +225,22 @@ class InspectorPathDrawer extends React.Component {
         return paths.map(([refBB, objBB]) => {
             let fromX = (refBB.left + refBB.right) / 2
             let fromY = (refBB.top + refBB.bottom) / 2
-            return `M ${fromX} ${fromY} L ${objBB.left} ${objBB.top}`
+            let toX = objBB.left + 10
+            let toY = objBB.top + 15
+
+            let middleX = (fromX + toX) / 2
+            let middleY = (fromY + toY) / 2
+            let crossX = (toY - fromY) / 5
+            let crossY = -(toX - fromX) / 5
+            if (crossY > 0) {
+                crossX *= -1
+                crossY *= -1
+            }
+
+            let controlX = middleX + crossX
+            let controlY = middleY + crossY
+
+            return `M${fromX},${fromY} Q${controlX},${controlY} ${toX},${toY}`
         })
     }
 }
