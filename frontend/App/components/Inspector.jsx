@@ -10,50 +10,33 @@ import { isNullOrUndefined } from 'util';
 @connect(state => ({ debug: state.debug }))
 export default class Inspector extends React.Component {
 
-    constructor(props) {
-        super(props)
-    }
-
     componentDidUpdate() {
         let { dispatch } = this.props
-
         dispatch(
-            setObjectContext(
-                this.heapObjectsReferences,
-                this.heapVariableReferences,
-                this.stackVariableReferences
-            )
+            setObjectContext(this.heapObjectsReferences, this.heapVariableReferences, this.stackVariableReferences)
         )
     }
 
     render() {
         let { dispatch, debug } = this.props
-
         let frameResponses = debug.responses.filter(response => response.event === 'frame')
         if (frameResponses.length === 0) return null
-
         let lastFrameResponse = frameResponses.slice(-1)[0]
         let {
-            reactObjects,
-            heapObjectsReferences,
-            heapVariableReferences
+            reactObjects, heapObjectsReferences, heapVariableReferences
         } = this.generateHeapObjectsAndReferences(lastFrameResponse.value.locals)
         let {
-            reactFrames,
-            stackVariableReferences
+            reactFrames, stackVariableReferences
         } = this.generateStackFramesAndReferences(lastFrameResponse.value.locals)
-
         let referencedReactObjects = Object.keys(reactObjects)
             .filter(ref =>
                 heapVariableReferences[ref] && heapVariableReferences[ref].count > 0 ||
                 stackVariableReferences[ref] && stackVariableReferences[ref].count > 0
             )
             .map(ref => reactObjects[ref])
-
         this.heapObjectsReferences = heapObjectsReferences
         this.heapVariableReferences = heapVariableReferences
         this.stackVariableReferences = stackVariableReferences
-
         return <div>
             <SplitPane
                 split={'vertical'}
@@ -61,22 +44,20 @@ export default class Inspector extends React.Component {
                 maxSize={'95%'}
                 defaultSize={'20%'}
                 className={'border'}
+                style={{ fontFamily: 'monospace', fontSize: 12, opacity: 0.75 }}
                 resizerClassName={'border'}
             >
                 {reactFrames}
-                <div style={{ overflow: 'auto' }}>
-                    <div style={{ height: '3000px', width: '3000px' }}>{
-                        referencedReactObjects.map(object =>
-                            <Draggable
-                                onDrag={event => dispatch(objectDrag())}
-                                bounds={'parent'}
-                                style={{ opacity: 0.7 }}
-                            >
-                                {object}
-                            </Draggable>
-                        )
-                    }</div>
-                </div>
+                {
+                    referencedReactObjects.map(object =>
+                        <Draggable
+                            onDrag={event => dispatch(objectDrag())}
+                            bounds={'parent'}
+                        >
+                            {object}
+                        </Draggable>
+                    )
+                }
             </SplitPane>
             <InspectorPathDrawer />
         </div>
@@ -89,10 +70,7 @@ export default class Inspector extends React.Component {
         Object.keys(locals.objects)
             .forEach(ref =>
                 reactObjects[ref] = this.generateObject(
-                    locals.objects[ref],
-                    locals,
-                    heapObjectsReferences,
-                    heapVariableReferences
+                    locals.objects[ref], locals, heapObjectsReferences, heapVariableReferences
                 )
             )
         return {
@@ -106,14 +84,7 @@ export default class Inspector extends React.Component {
         let isUserDefinedInstance = locals.classes.indexOf(object.type) !== -1
         let isHorizontalListed = ['list', 'tuple', 'set'].indexOf(object.type) !== -1
         let isOnlyValueShowed = object.type == 'set'
-        let {
-            _style = {},
-            _varsStyle = {},
-            _varStyle = {},
-            _varHides = [],
-            _varInside = []
-        } = object.injects
-
+        let { _style = {}, _varsStyle = {}, _varStyle = {}, _varHides = [], _varInside = [] } = object.injects
         let contents = Object.values(object.members)
             .filter(([name, _]) => !isUserDefinedInstance || _varHides.indexOf(this.generateVariableName(name)) === -1)
             .map(([name, value]) => {
@@ -130,16 +101,13 @@ export default class Inspector extends React.Component {
                 return <div
                     className={(isHorizontalListed ? 'd-table-cell' : 'd-table-column') + ' align-top p-1'}
                     style={
-                        isUserDefinedInstance
-                            ? { 'opacity': 0.7, ..._varsStyle, ..._varStyle[this.generateVariableName(name)] }
-                            : { 'opacity': 0.7 }
+                        isUserDefinedInstance ? { ..._varsStyle, ..._varStyle[this.generateVariableName(name)] } : null
                     }
                 >
                     <span className='align-top'>{!isOnlyValueShowed ? varName + ': ' : null}</span>
                     <span>{varValue}</span>
                 </div>
             })
-
         return <div
             className='d-inline-block border p-1 btn-primary'
             style={isUserDefinedInstance ? { ..._style } : null}
@@ -159,33 +127,21 @@ export default class Inspector extends React.Component {
     }
 
     generateFrame(frame, locals, variableReferences) {
-        let {
-            _style = {},
-            _varsStyle = {},
-            _varStyle = {},
-            _varHides = [],
-            _varInside = []
-        } = frame.injects
-
+        let { _style = {}, _varsStyle = {}, _varStyle = {}, _varHides = [], _varInside = [] } = frame.injects
         let contents = Object.values(frame.variables)
             .filter(([name, _]) => _varHides.indexOf(this.generateVariableName(name)) === -1)
             .map(([name, value]) => {
                 let varValue = this.generateVariableValue(
-                    value,
-                    locals,
-                    variableReferences,
-                    undefined,
-                    _varInside.indexOf(name) !== -1
+                    value, locals, variableReferences, undefined, _varInside.indexOf(name) !== -1
                 )
                 return <tr>
                     <th scope='col'>{name}</th>
                     <th scope='col'>{varValue}</th>
                 </tr>
             })
-
         return <table
             className='table table-sm table-hover table-striped table-bordered'
-            style={{ 'opacity': 0.7, ..._style }}>
+            style={_style}>
             <thead className='thead-light'>
                 <tr>
                     <th scope='col'>{frame.name}</th>
@@ -241,14 +197,8 @@ class InspectorPathDrawer extends React.Component {
 
     render() {
         let { inspector } = this.props
-        let {
-            heapObjectsReferences,
-            heapVariableReferences,
-            stackVariableReferences
-        } = inspector
-
+        let { heapObjectsReferences, heapVariableReferences, stackVariableReferences } = inspector
         let pathsDs = this.generatePathsDs(heapObjectsReferences, heapVariableReferences, stackVariableReferences)
-
         return <svg className='position-fixed' style={{ left: 0, top: 0, zIndex: -1 }} width='100vw' height='100vh'>
             {pathsDs.map(d => <path d={d} stroke='black' z="1" fill='transparent' />)}
         </svg>
@@ -259,7 +209,6 @@ class InspectorPathDrawer extends React.Component {
         let objectsBoundRects = {}
         Object.keys(heapObjectsReferences)
             .forEach(ref => objectsBoundRects[ref] = heapObjectsReferences[ref].getBoundingClientRect())
-
         let paths = []
         Object.keys(heapVariableReferences)
             .forEach(ref => {
