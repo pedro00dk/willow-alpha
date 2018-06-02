@@ -2,7 +2,7 @@ import React from 'react'
 import { connect } from 'react-redux'
 import SplitPane from 'react-split-pane'
 
-import DebugBar from '../components/DebugBar'
+import Debugger from '../components/Debugger'
 import Header from '../components/Header'
 import InputEditor from '../components/InputEditor'
 import Inspector from '../components/Inspector'
@@ -54,7 +54,7 @@ export default class AppContainer extends React.Component {
 
         return <div>
             <Header style={{ height: '7.5vh' }} />
-            <DebugBar style={{ height: '7.5vh' }} />
+            <Debugger style={{ height: '7.5vh' }} />
             <SplitPane
                 split={'vertical'}
                 minSize={'5%'}

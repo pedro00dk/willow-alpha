@@ -6,12 +6,12 @@ import { setReadLines } from '../reducers/input'
 import { setOutput, updateOutput } from '../reducers/output'
 import { setEditable, setMarkers } from '../reducers/script'
 
-import playBtn from './debugBar/playBtn.png'
-import restartBtn from './debugBar/restartBtn.png'
-import stepIntoBtn from './debugBar/stepIntoBtn.png'
-import stepOutBtn from './debugBar/stepOutBtn.png'
-import stepOverBtn from './debugBar/stepOverBtn.png'
-import stopBtn from './debugBar/stopBtn.png'
+import playBtn from './debugger/playBtn.png'
+import restartBtn from './debugger/restartBtn.png'
+import stepIntoBtn from './debugger/stepIntoBtn.png'
+import stepOutBtn from './debugger/stepOutBtn.png'
+import stepOverBtn from './debugger/stepOverBtn.png'
+import stopBtn from './debugger/stopBtn.png'
 
 
 @connect(state => ({
@@ -22,7 +22,7 @@ import stopBtn from './debugBar/stopBtn.png'
     script: state.script,
     user: state.user
 }))
-export default class DebugBar extends React.Component {
+export default class Debugger extends React.Component {
 
     constructor(props) {
         super(props)
