@@ -1,9 +1,11 @@
 import { execute_fetch } from './util/util'
+import { networkInterfaces } from 'os';
 
 const initialState = {
     isFetching: false,
     isDebugging: false,
-    responses: []
+    responses: [],
+    newResponsesCount: 0
 }
 
 // reducer
@@ -27,7 +29,12 @@ export default function reduce(state = initialState, action = {}) {
             if (!state.isDebugging) return state
             return { ...state, isFetching: true }
         case DEBUG_STEP_SUCCESS:
-            return { ...state, isFetching: false, responses: state.responses.slice().concat(action.json.responses) }
+            return {
+                ...state,
+                isFetching: false,
+                responses: state.responses.slice().concat(action.json.responses),
+                newResponsesCount: action.json.responses.length
+            }
         case DEBUG_STEP_FAIL:
             return { ...initialState }
         case DEBUG_SEND_INPUT:

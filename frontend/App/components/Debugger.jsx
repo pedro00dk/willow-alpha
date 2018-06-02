@@ -28,12 +28,8 @@ export default class Debugger extends React.Component {
         super(props)
 
         this.state = {
-            message: '',
-            inToOut: true
+            message: ''
         }
-
-        this.currentResponse = 0
-        this.raisedException = null
 
         // binds
         this.isPlayAvailable = this.isPlayAvailable.bind(this)
@@ -66,7 +62,10 @@ export default class Debugger extends React.Component {
     }
 
     play() {
-        if (!this.isPlayAvailable()) return
+        if (!this.isPlayAvailable()) {
+            this.setState({ message: 'action not available' })
+            return
+        }
         let { dispatch, debug, script } = this.props
 
         if (!debug.isDebugging) {
@@ -75,15 +74,16 @@ export default class Debugger extends React.Component {
             dispatch(setReadLines(0))
             dispatch(setOutput(''))
             dispatch(startDebug(script.script))
-            this.currentResponse = 0
-            this.raisedException = null
         } else {
             // TODO continue
         }
     }
 
     restart() {
-        if (!this.isRestartOrStopAvailable()) return
+        if (!this.isRestartOrStopAvailable()) {
+            this.setState({ message: 'action not available' })
+            return
+        }
         let { dispatch, debug, script } = this.props
 
         dispatch(setEditable(false))
@@ -91,38 +91,46 @@ export default class Debugger extends React.Component {
         dispatch(setReadLines(0))
         dispatch(setOutput(''))
         dispatch(startDebug(script.script))
-        this.currentResponse = 0
-        this.raisedException = null
     }
 
     stop() {
-        if (!this.isRestartOrStopAvailable()) return
+        if (!this.isRestartOrStopAvailable()) {
+            this.setState({ message: 'action not available' })
+            return
+        }
         let { dispatch, debug } = this.props
 
         dispatch(setEditable(true))
         dispatch(setMarkers([]))
         dispatch(setReadLines(0))
         dispatch(stopDebug())
-        this.currentResponse = 0
-        this.raisedException = null
     }
 
     stepInto() {
-        if (!this.isStepAvailable()) return
+        if (!this.isStepAvailable()) {
+            this.setState({ message: 'action not available' })
+            return
+        }
         let { dispatch } = this.props
 
         dispatch(stepInto())
     }
 
     stepOver() {
-        if (!this.isStepAvailable()) return
+        if (!this.isStepAvailable()) {
+            this.setState({ message: 'action not available' })
+            return
+        }
         let { dispatch } = this.props
 
         dispatch(stepOver())
     }
 
     stepOut() {
-        if (!this.isStepAvailable()) return
+        if (!this.isStepAvailable()) {
+            this.setState({ message: 'action not available' })
+            return
+        }
         let { dispatch } = this.props
 
         dispatch(stepOut())
@@ -131,18 +139,18 @@ export default class Debugger extends React.Component {
     componentDidUpdate() {
         let { dispatch, debug, input, output, script } = this.props
 
-        if (!debug.isDebugging) return
-
-        let nextResponsesCount = debug.responses.length - this.currentResponse
-        if (nextResponsesCount === 0) return
-        let nextResponses = debug.responses.slice(-nextResponsesCount)
-        this.currentResponse = debug.responses.length
-
-        nextResponses.forEach(response => {
+        if (!debug.isDebugging || debug.newResponsesCount === 0) {
+            this.setState({ message: 'debugger is not running' })
+            return
+        }
+        let responses = debug.responses.slice(-debug.newResponsesCount)
+        responses.forEach(response => {
+            this.setState({ message: 'debugger running' })
             if (response.event === 'start') this.stepInto()
             else if (response.event === 'error') {
+                this.setState({ message: 'script or internal error' })
                 dispatch(updateOutput(
-                    response.value.tb
+                    response.value.traceback
                         .filter((line, i) => i !== 1)
                         .join('')
                 ))
@@ -161,7 +169,7 @@ export default class Debugger extends React.Component {
                         : null
                 if (response.value.end) {
                     if (this.raisedException !== null) {
-                        dispatch(updateOutput(this.raisedException.tb.join('')))
+                        dispatch(updateOutput(this.raisedException.traceback.join('')))
                     }
                     this.stop()
                 }
@@ -171,8 +179,10 @@ export default class Debugger extends React.Component {
                     let inputLine = input.input[input.input.length - 1]
                     dispatch(sendInput(inputLine))
                     dispatch(setReadLines(input.readLines + 1))
-                    //dispatch(updateOutput(inputLine + '\n'))
-                } else dispatch(setMarkers([{ line: script.markers.slice(-1)[0].line, type: 'warn' }]))
+                } else {
+                    this.setState({ message: 'input required' })
+                    dispatch(setMarkers([{ line: script.markers.slice(-1)[0].line, type: 'warn' }]))
+                }
             } else if (response.event === 'print') {
                 dispatch(setMarkers([{ line: script.markers.slice(-1)[0].line }]))
                 dispatch(updateOutput(response.value))
@@ -181,11 +191,13 @@ export default class Debugger extends React.Component {
     }
 
     shouldComponentUpdate(nextProps, nextState, nextContext) {
-        return this.props.debug !== nextProps.debug
+        return this.props.debug !== nextProps.debug || this.state.message !== nextState.message
     }
 
     render() {
         let { style } = this.props
+        let { message } = this.state
+
         return <div style={style}>
             <img src={playBtn} className='h-100'
                 style={{ cursor: 'pointer', filter: this.isPlayAvailable() ? null : 'grayscale(80%)' }}
@@ -205,6 +217,7 @@ export default class Debugger extends React.Component {
             <img src={stopBtn} className='h-100'
                 style={{ cursor: 'pointer', filter: this.isRestartOrStopAvailable() ? null : 'grayscale(80%)' }}
                 onClick={this.stop} />
+            {message}
         </div>
     }
 }
