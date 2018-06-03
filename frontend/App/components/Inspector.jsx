@@ -46,6 +46,7 @@ export default class Inspector extends React.Component {
         this.stackVariableReferences = stackVariableReferences
 
         return <div>
+            <input className='w-100' type='range' min={0} max={frameResponses.length - 1} step={1} />
             <SplitPane
                 split={'vertical'}
                 minSize={'5%'}
@@ -201,7 +202,7 @@ export default class Inspector extends React.Component {
             variableReferences[variable[0]].count++ // count can used before the lazy spans reference push 
             return <span ref={ref => variableReferences[variable[0]].spans.push(ref)}>::</span>
         }
-        variable = variable.toString()
+        variable = variable !== null ? variable.toString() : 'None'
         return variable.length > crop ? variable.substring(0, crop - 2) + '..' : variable
     }
 }
