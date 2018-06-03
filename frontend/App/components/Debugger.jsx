@@ -27,10 +27,6 @@ export default class Debugger extends React.Component {
     constructor(props) {
         super(props)
 
-        this.state = {
-            message: ''
-        }
-
         // binds
         this.isPlayAvailable = this.isPlayAvailable.bind(this)
         this.isRestartOrStopAvailable = this.isRestartOrStopAvailable.bind(this)
@@ -62,10 +58,7 @@ export default class Debugger extends React.Component {
     }
 
     play() {
-        if (!this.isPlayAvailable()) {
-            this.setState({ message: 'action not available' })
-            return
-        }
+        if (!this.isPlayAvailable()) return this.message = 'action not available'
         let { dispatch, debug, script } = this.props
 
         if (!debug.isDebugging) {
@@ -80,10 +73,7 @@ export default class Debugger extends React.Component {
     }
 
     restart() {
-        if (!this.isRestartOrStopAvailable()) {
-            this.setState({ message: 'action not available' })
-            return
-        }
+        if (!this.isRestartOrStopAvailable()) return this.message = 'action not available'
         let { dispatch, debug, script } = this.props
 
         dispatch(setEditable(false))
@@ -94,10 +84,7 @@ export default class Debugger extends React.Component {
     }
 
     stop() {
-        if (!this.isRestartOrStopAvailable()) {
-            this.setState({ message: 'action not available' })
-            return
-        }
+        if (!this.isRestartOrStopAvailable()) return this.message = 'action not available'
         let { dispatch, debug } = this.props
 
         dispatch(setEditable(true))
@@ -107,70 +94,64 @@ export default class Debugger extends React.Component {
     }
 
     stepInto() {
-        if (!this.isStepAvailable()) {
-            this.setState({ message: 'action not available' })
-            return
-        }
+        if (!this.isStepAvailable()) return this.message = 'action not available'
         let { dispatch } = this.props
 
         dispatch(stepInto())
     }
 
     stepOver() {
-        if (!this.isStepAvailable()) {
-            this.setState({ message: 'action not available' })
-            return
-        }
+        if (!this.isStepAvailable()) return this.message = 'action not available'
         let { dispatch } = this.props
 
         dispatch(stepOver())
     }
 
     stepOut() {
-        if (!this.isStepAvailable()) {
-            this.setState({ message: 'action not available' })
-            return
-        }
+        if (!this.isStepAvailable()) return this.message = 'action not available'
         let { dispatch } = this.props
 
         dispatch(stepOut())
     }
 
+    componentDidMount() {
+        this.componentDidUpdate()
+    }
+
     componentDidUpdate() {
         let { dispatch, debug, input, output, script } = this.props
 
-        if (!debug.isDebugging || debug.newResponsesCount === 0) {
-            this.setState({ message: 'debugger is not running' })
-            return
+        if (debug.isDebugging) this.message = 'debugger running'
+        else if (debug.isFetching) this.message = 'fetching'
+        else this.message = 'debugger stopped'
+
+        if (debug.responses.length === 0) {
+            this.processedResponses = 0
+            this.raisedException = null
         }
-        let responses = debug.responses.slice(-debug.newResponsesCount)
-        responses.forEach(response => {
-            this.setState({ message: 'debugger running' })
+
+        if (!debug.isDebugging || debug.isFetching || debug.responses.length === this.processedResponses) return
+
+        let nextResponses = debug.responses.slice(this.processedResponses - debug.responses.length)
+        this.processedResponses = debug.responses.length
+
+        nextResponses.forEach(response => {
             if (response.event === 'start') this.stepInto()
             else if (response.event === 'error') {
-                this.setState({ message: 'script or internal error' })
-                dispatch(updateOutput(
-                    response.value.traceback
-                        .filter((line, i) => i !== 1)
-                        .join('')
-                ))
+                this.message = 'script or internal error'
+                dispatch(updateOutput(response.value.traceback.filter((line, i) => i !== 1).join('')))
                 this.stop()
             } else if (response.event === 'frame') {
-                dispatch(setMarkers(
-                    [{
-                        line: response.value.line,
-                        type: response.value.event === 'exception' ? 'error' : undefined
-                    }]
-                ))
-                this.raisedException = response.value.event === 'exception'
-                    ? response.value.args
-                    : response.value.event === 'return'
-                        ? this.raisedException
-                        : null
+                let frame = response.value
+                dispatch(setMarkers([{ line: frame.line, type: frame.event === 'exception' ? 'error' : undefined }]))
+                this.raisedException =
+                    frame.event === 'exception'
+                        ? frame.exception
+                        : frame.event === 'return'
+                            ? this.raisedException
+                            : null
                 if (response.value.end) {
-                    if (this.raisedException !== null) {
-                        dispatch(updateOutput(this.raisedException.traceback.join('')))
-                    }
+                    if (this.raisedException) dispatch(updateOutput(this.raisedException.traceback.join('')))
                     this.stop()
                 }
             } else if (response.event === 'input' || response.event === 'require_input') {
@@ -180,7 +161,7 @@ export default class Debugger extends React.Component {
                     dispatch(sendInput(inputLine))
                     dispatch(setReadLines(input.readLines + 1))
                 } else {
-                    this.setState({ message: 'input required' })
+                    this.message = 'input required'
                     dispatch(setMarkers([{ line: script.markers.slice(-1)[0].line, type: 'warn' }]))
                 }
             } else if (response.event === 'print') {
@@ -190,13 +171,12 @@ export default class Debugger extends React.Component {
         })
     }
 
-    shouldComponentUpdate(nextProps, nextState, nextContext) {
-        return this.props.debug !== nextProps.debug || this.state.message !== nextState.message
+    shouldComponentUpdate(nextProps, nextState) {
+        return this.props.debug !== nextProps.debug
     }
 
     render() {
         let { style } = this.props
-        let { message } = this.state
 
         return <div style={style}>
             <img src={playBtn} className='h-100'
@@ -217,7 +197,7 @@ export default class Debugger extends React.Component {
             <img src={stopBtn} className='h-100'
                 style={{ cursor: 'pointer', filter: this.isRestartOrStopAvailable() ? null : 'grayscale(80%)' }}
                 onClick={this.stop} />
-            {message}
+            {this.message}
         </div>
     }
 }

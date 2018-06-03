@@ -4,8 +4,7 @@ import { networkInterfaces } from 'os';
 const initialState = {
     isFetching: false,
     isDebugging: false,
-    responses: [],
-    newResponsesCount: 0
+    responses: []
 }
 
 // reducer
@@ -14,37 +13,33 @@ export default function reduce(state = initialState, action = {}) {
         case DEBUG_START:
             return { ...initialState, isFetching: true, isDebugging: true }
         case DEBUG_START_SUCCESS:
-            return {...state, isFetching: false, responses: [action.json.responses]}
+            return { ...state, isFetching: false, responses: [action.json.responses] }
         case DEBUG_START_FAIL:
-            return {...initialState, responses: [action.json.responses]}
+            return { ...initialState, responses: [action.json.responses] }
+
         case DEBUG_STOP:
-            if (!state.isDebugging) return state
-            return { ...initialState }
+            return state.isDebugging ? { ...initialState } : state
         case DEBUG_STOP_SUCCESS:
         case DEBUG_STOP_FAIL:
             return { ...initialState }
+
         case DEBUG_STEP_OVER:
         case DEBUG_STEP_INTO:
         case DEBUG_STEP_OUT:
-            if (!state.isDebugging) return state
-            return { ...state, isFetching: true }
+            return state.isDebugging ? { ...state, isFetching: true } : state
+
         case DEBUG_STEP_SUCCESS:
-            return {
-                ...state,
-                isFetching: false,
-                responses: state.responses.slice().concat(action.json.responses),
-                newResponsesCount: action.json.responses.length
-            }
+            return { ...state, isFetching: false, responses: state.responses.slice().concat(action.json.responses) }
         case DEBUG_STEP_FAIL:
             return { ...initialState }
+
         case DEBUG_SEND_INPUT:
-            if (!state.isDebugging) return state
-            return { ...state, isFetching: true }
+            return state.isDebugging ? { ...state, isFetching: true } : state
         case DEBUG_SEND_INPUT_SUCCESS:
-            if (!state.isDebugging) return state
-            return { ...state, isFetching: false }
+            return state.isDebugging ? { ...state, isFetching: false } : state
         case DEBUG_SEND_INPUT_FAIL:
             return { ...initialState }
+
         default:
             return state
     }
