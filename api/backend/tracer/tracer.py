@@ -107,6 +107,9 @@ class TracerController:
     def require_state(self, *states):
         if self.state not in states:
             raise Exception('illegal state')
+    
+    def get_state(self):
+        return self.state.name
 
 
 class FilteredTracerController(TracerController):
