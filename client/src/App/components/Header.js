@@ -1,86 +1,52 @@
 import React from 'react'
 import { connect } from 'react-redux'
+import { fetchExercises } from '../reducers/exercise'
+import { setScript } from '../reducers/script'
 
-import { fetchExercises, selectExercise } from '../reducers/exercise'
-import { fetchUser, fetchLoginAddress, logoutUser } from '../reducers/user'
 
-
-@connect(state => ({ exercise: state.exercise, user: state.user }))
+@connect(state => ({ exercise: state.exercise }))
 export default class Header extends React.Component {
 
     componentDidMount() {
-        let { dispatch, exercise, user } = this.props
+        let { dispatch } = this.props
 
-        if (!exercise.isFetching && exercise.exercises.length === 0) dispatch(fetchExercises())
-        if (!user.isFetching) dispatch(fetchUser())
-        dispatch(fetchLoginAddress())
+        dispatch(fetchExercises())
     }
 
     render() {
-        let { dispatch, style } = this.props
+        let { style } = this.props
 
-        return <nav className='navbar navbar-expand navbar-light bg-light' style={style}>
-            <a className='navbar-brand' href='#' onClick={() => dispatch(selectExercise(null))}>
-                Willow
-            </a>
-            <button className='navbar-toggler' type='button' data-toggle='collapse' data-target='#headerContent'
-                aria-controls='headerContent' aria-expanded='false' aria-label='Toggle navigation'>
-                <span className='navbar-toggler-icon' />
-            </button>
-            <div className='collapse navbar-collapse' id='headerContent'>
+        return (
+            <nav className='navbar navbar-expand navbar-light bg-light' style={style}>
+                <a className='navbar-brand' href='#'>
+                    Willow
+                </a>
                 <ul className='navbar-nav mr-auto'>
-                    <li className='nav-item active dropdown'>
-                        <a className='nav-link dropdown-toggle' href='#' id='exercisesDropdown' role='button'
+                    <li className='nav-item dropdown'>
+                        <a className='nav-link dropdown-toggle' href='#' id='navbarDropdown' role='button'
                             data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>
                             Exercises
                         </a>
-                        <div className='dropdown-menu' aria-labelledby='exercisesDropdown'>
+                        <div className='dropdown-menu' aria-labelledby='navbarDropdown'>
                             {this.renderExercisesOptions()}
                         </div>
-                    </li >
+                    </li>
                 </ul>
-                <ul className='navbar-nav ml-auto'>
-                    {this.renderUserOptions()}
-                </ul>
-            </div>
-        </nav>
+            </nav>
+        )
     }
 
     renderExercisesOptions() {
         let { dispatch, exercise } = this.props
 
         if (exercise.isFetching) return <a className='dropdown-item' href='#'>Loading...</a>
-        if (!exercise.exercises) return <a className='dropdown-item' href='#'>Failed to load</a>
-        if (exercise.exercises.length === 0) return <a className='dropdown-item' href='#'>No exercises found</a>
+        if (!exercise.exercises) return <a className='dropdown-item' href='#'>Failed</a>
+        if (exercise.exercises.length === 0) return <a className='dropdown-item' href='#'>Empty</a>
         return exercise.exercises
-            .map((exercise, i) =>
-                <a className='dropdown-item' href='#' onClick={() => dispatch(selectExercise(exercise.id))}>
+            .map(
+                exercise => <a className='dropdown-item' href='#' onClick={() => dispatch(setScript(exercise.code))}>
                     {exercise.name}
                 </a>
             )
-    }
-
-    renderUserOptions() {
-        let { dispatch, user } = this.props
-
-        if (user.isFetching) return <li className='nav-item'>Loading</li>
-        if (!user.id)
-            return <li className='nav-item active'>
-                <a className='nav-link' href={user.link ? user.link : '#'}>
-                    Log in
-                </a>
-            </li>
-        return [
-            <li className='nav-item'>
-                <a className='nav-link'>
-                    {user.email}
-                </a>
-            </li>,
-            <li className='nav-item active'>
-                <a className='nav-link' href='#' onClick={() => dispatch(logoutUser())}>
-                    Log out
-                </a>
-            </li>
-        ]
     }
 }

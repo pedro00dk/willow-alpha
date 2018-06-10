@@ -1,4 +1,4 @@
-import { execute_fetch } from './util/util'
+import { execute_fetch } from '../../util'
 import { networkInterfaces } from 'os';
 
 const initialState = {
