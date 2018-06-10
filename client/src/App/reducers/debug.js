@@ -8,7 +8,6 @@ const initialState = {
 
 // reducer
 export default function reduce(state = initialState, action = {}) {
-    console.log(state)
     switch (action.type) {
         case DEBUG_START:
             return { ...initialState, isFetching: true, isDebugging: true }

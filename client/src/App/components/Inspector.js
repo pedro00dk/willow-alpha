@@ -46,7 +46,6 @@ export default class Inspector extends React.Component {
         this.stackVariableReferences = stackVariableReferences
 
         return <div>
-            <input className='w-100' type='range' min={0} max={frameResponses.length - 1} step={1} />
             <SplitPane
                 split={'vertical'}
                 minSize={'5%'}
