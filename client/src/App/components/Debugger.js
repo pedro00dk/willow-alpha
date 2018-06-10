@@ -1,6 +1,5 @@
 import React from 'react'
 import { connect } from 'react-redux'
-
 import { startDebug, stopDebug, stepOver, stepInto, stepOut, sendInput } from '../reducers/debug'
 import { setReadLines } from '../reducers/input'
 import { setOutput, updateOutput } from '../reducers/output'
@@ -14,14 +13,7 @@ import stepOverBtn from './debugger/stepOverBtn.png'
 import stopBtn from './debugger/stopBtn.png'
 
 
-@connect(state => ({
-    debug: state.debug,
-    exercise: state.exercise,
-    input: state.input,
-    output: state.output,
-    script: state.script,
-    user: state.user
-}))
+@connect(state => ({ debug: state.debug, input: state.input, output: state.output, script: state.script }))
 export default class Debugger extends React.Component {
 
     constructor(props) {
@@ -40,26 +32,26 @@ export default class Debugger extends React.Component {
     }
 
     isPlayAvailable() {
-        let { debug } = this.props
+        const { debug } = this.props
 
         return !debug.isFetching
     }
 
     isRestartOrStopAvailable() {
-        let { debug } = this.props
+        const { debug } = this.props
 
         return debug.isDebugging
     }
 
     isStepAvailable() {
-        let { debug } = this.props
+        const { debug } = this.props
 
         return debug.isDebugging && !debug.isFetching
     }
 
     play() {
         if (!this.isPlayAvailable()) return this.message = 'action not available'
-        let { dispatch, debug, script } = this.props
+        const { dispatch, debug, script } = this.props
 
         if (!debug.isDebugging) {
             dispatch(setEditable(false))
@@ -74,7 +66,7 @@ export default class Debugger extends React.Component {
 
     restart() {
         if (!this.isRestartOrStopAvailable()) return this.message = 'action not available'
-        let { dispatch, debug, script } = this.props
+        const { dispatch, script } = this.props
 
         dispatch(setEditable(false))
         dispatch(setMarkers([]))
@@ -85,7 +77,7 @@ export default class Debugger extends React.Component {
 
     stop() {
         if (!this.isRestartOrStopAvailable()) return this.message = 'action not available'
-        let { dispatch, debug } = this.props
+        const { dispatch } = this.props
 
         dispatch(setEditable(true))
         dispatch(setMarkers([]))
@@ -95,21 +87,21 @@ export default class Debugger extends React.Component {
 
     stepInto() {
         if (!this.isStepAvailable()) return this.message = 'action not available'
-        let { dispatch } = this.props
+        const { dispatch } = this.props
 
         dispatch(stepInto())
     }
 
     stepOver() {
         if (!this.isStepAvailable()) return this.message = 'action not available'
-        let { dispatch } = this.props
+        const { dispatch } = this.props
 
         dispatch(stepOver())
     }
 
     stepOut() {
         if (!this.isStepAvailable()) return this.message = 'action not available'
-        let { dispatch } = this.props
+        const { dispatch } = this.props
 
         dispatch(stepOut())
     }
@@ -119,7 +111,7 @@ export default class Debugger extends React.Component {
     }
 
     componentDidUpdate() {
-        let { dispatch, debug, input, output, script } = this.props
+        const { dispatch, debug, input, script } = this.props
 
         if (debug.isDebugging) this.message = 'debugger running'
         else if (debug.isFetching) this.message = 'fetching'

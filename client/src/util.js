@@ -1,12 +1,13 @@
 import { apiAddress } from './config'
 
-export function session_fetch({ url, method = 'get', body = null, log = true, on2XX = null, onNot2XX = null,
+export function session_fetch({ url, method = 'get', body = null, on2XX = null, onNot2XX = null,
     on3XX = null, on4XX = null, on5XX = null, onAny = null, onRes = null, onErr = null }) {
     return fetch(
         apiAddress + url,
         {
+            mode: 'cors',
             method: method,
-            credentials: 'same-origin',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: method.toLowerCase() !== 'get' ? JSON.stringify(body) : undefined
         }

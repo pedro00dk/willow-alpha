@@ -8,13 +8,13 @@ import { setScript } from '../reducers/script'
 export default class Header extends React.Component {
 
     componentDidMount() {
-        let { dispatch } = this.props
+        const { dispatch } = this.props
 
         dispatch(fetchExercises())
     }
 
     render() {
-        let { style } = this.props
+        const { style } = this.props
 
         return (
             <nav className='navbar navbar-expand navbar-light bg-light' style={style}>
@@ -37,7 +37,7 @@ export default class Header extends React.Component {
     }
 
     renderExercisesOptions() {
-        let { dispatch, exercise } = this.props
+        const { dispatch, exercise } = this.props
 
         if (exercise.isFetching) return <a className='dropdown-item' href='#'>Loading...</a>
         if (!exercise.exercises) return <a className='dropdown-item' href='#'>Failed</a>

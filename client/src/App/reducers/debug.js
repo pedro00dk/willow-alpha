@@ -1,5 +1,4 @@
-import { execute_fetch } from '../../util'
-import { networkInterfaces } from 'os';
+import { session_fetch } from '../../util'
 
 const initialState = {
     isFetching: false,
@@ -9,11 +8,12 @@ const initialState = {
 
 // reducer
 export default function reduce(state = initialState, action = {}) {
+    console.log(state)
     switch (action.type) {
         case DEBUG_START:
             return { ...initialState, isFetching: true, isDebugging: true }
         case DEBUG_START_SUCCESS:
-            return { ...state, isFetching: false, responses: [action.json.responses] }
+            return { ...state, isFetching: false, responses: [action.json.response] }
         case DEBUG_START_FAIL:
             return { ...initialState, responses: [action.json.responses] }
 
@@ -29,7 +29,7 @@ export default function reduce(state = initialState, action = {}) {
             return state.isDebugging ? { ...state, isFetching: true } : state
 
         case DEBUG_STEP_SUCCESS:
-            return { ...state, isFetching: false, responses: state.responses.slice().concat(action.json.responses) }
+            return { ...state, isFetching: false, responses: state.responses.slice().concat(action.json.response) }
         case DEBUG_STEP_FAIL:
             return { ...initialState }
 
@@ -65,11 +65,11 @@ const DEBUG_SEND_INPUT_FAIL = 'DEBUG_SEND_INPUT_FAIL'
 export function startDebug(script) {
     return dispatch => {
         dispatch({ type: DEBUG_START })
-        return execute_fetch({
-            url: '/tracer/', method: 'post', body: { option: 'start', script: script },
-            on2XX: json => dispatch({ type: DEBUG_START_SUCCESS, action: 'start', json: json }),
-            onNot2XX: json => dispatch({ type: DEBUG_START_FAIL, action: 'start', json: json }),
-            onErr: err => dispatch({ type: DEBUG_START_FAIL, action: 'start' })
+        return session_fetch({
+            url: 'tracer/', method: 'post', body: { option: 'start', script: script },
+            on2XX: json => dispatch({ type: DEBUG_START_SUCCESS, json: json }),
+            onNot2XX: json => dispatch({ type: DEBUG_START_FAIL, json: json }),
+            onErr: err => dispatch({ type: DEBUG_START_FAIL })
         })
     }
 }
@@ -77,11 +77,11 @@ export function startDebug(script) {
 export function stopDebug() {
     return dispatch => {
         dispatch({ type: DEBUG_STOP })
-        return execute_fetch({
-            url: '/tracer/', method: 'post', body: { option: 'stop' },
-            on2XX: json => dispatch({ type: DEBUG_STOP_SUCCESS, action: 'stop', json: json }),
-            onNot2XX: json => dispatch({ type: DEBUG_STOP_FAIL, action: 'stop', json: json }),
-            onErr: err => dispatch({ type: DEBUG_STOP_FAIL, action: 'stop' })
+        return session_fetch({
+            url: 'tracer/', method: 'post', body: { option: 'stop' },
+            on2XX: json => dispatch({ type: DEBUG_STOP_SUCCESS, json: json }),
+            onNot2XX: json => dispatch({ type: DEBUG_STOP_FAIL, json: json }),
+            onErr: err => dispatch({ type: DEBUG_STOP_FAIL })
         })
     }
 }
@@ -104,8 +104,8 @@ function step(type) {
         let option = type == DEBUG_STEP_INTO ? 'step_into'
             : type == DEBUG_STEP_OVER ? 'step_over'
                 : 'step_out'
-        return execute_fetch({
-            url: '/tracer/', method: 'post', body: { option: option },
+        return session_fetch({
+            url: 'tracer/', method: 'post', body: { option: option },
             on2XX: json => dispatch({ type: DEBUG_STEP_SUCCESS, events: json.events, json: json }),
             onNot2XX: json => dispatch({ type: DEBUG_STEP_FAIL, json: json }),
             onErr: err => dispatch({ type: DEBUG_STEP_FAIL })
@@ -116,8 +116,8 @@ function step(type) {
 export function sendInput(input) {
     return dispatch => {
         dispatch({ type: DEBUG_SEND_INPUT })
-        return execute_fetch({
-            url: '/tracer/', method: 'post', body: { option: 'input', input: input },
+        return session_fetch({
+            url: 'tracer/', method: 'post', body: { option: 'input', input: input },
             on2XX: json => dispatch({ type: DEBUG_SEND_INPUT_SUCCESS, json: json }),
             onNot2XX: json => dispatch({ type: DEBUG_SEND_INPUT_FAIL, json: json }),
             onErr: err => dispatch({ type: DEBUG_SEND_INPUT_FAIL })
