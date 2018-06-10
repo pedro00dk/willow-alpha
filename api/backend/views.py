@@ -43,8 +43,8 @@ class TracerAPIView(views.APIView):
             return response.Response({'error': 'script not provided'}, status=400)
         trc = tracer.StepTracerController(script)
         TracerAPIView.tracers[session] = trc
-        result = trc.start()
-        return response.Response({'result': result})
+        res = trc.start()
+        return response.Response({'response': res})
 
     def stop(self, request, session):
         trc = TracerAPIView.tracers.get(session)
@@ -54,7 +54,7 @@ class TracerAPIView(views.APIView):
                 TracerAPIView.tracers.pop(session)
             except Exception:
                 pass
-        return response.Response({'result': 'ok'})
+        return response.Response({'response': 'ok'})
 
     def step(self, request, session, step_type):
         trc = TracerAPIView.tracers.get(session)
@@ -63,7 +63,7 @@ class TracerAPIView(views.APIView):
             return response.Response({'error': 'tracer not running'}, status=400)
         trc_step = getattr(trc, step_type)
         try:
-            return response.Response({'result': trc_step()})
+            return response.Response({'response': trc_step()})
         except Exception:
             self.stop(request, session)
             return response.Response({'error': 'tracer internal error'}, status=500)
@@ -78,7 +78,7 @@ class TracerAPIView(views.APIView):
             return response.Response({'error': 'line not provided'}, status=400)
         try:
             trc.send_input(str(line))
-            return response.Response({'result': 'ok'})
+            return response.Response({'response': 'ok'})
         except Exception:
             self.stop(request, session)
             return response.Response({'error': 'tracer internal error'}, status=500)
