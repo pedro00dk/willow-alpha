@@ -96,6 +96,3 @@ REST_FRAMEWORK = {
 # CORS Configuration
 
 CORS_ORIGIN_ALLOW_ALL = True
-CORS_ALLOW_CREDENTIALS = True
-CORS_ORIGIN_WHITELIST = ('localhost:1234', 'localhost:3000')
-CORS_ORIGIN_REGEX_WHITELIST = ('localhost:*',)
