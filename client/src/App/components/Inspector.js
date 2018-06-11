@@ -231,8 +231,17 @@ class InspectorPathDrawer extends React.Component {
         let pathsDs = this.generatePathsDs(heapObjectsReferences, heapVariableReferences, stackVariableReferences)
 
         return <svg className='position-fixed' style={{ left: 0, top: 0, zIndex: -1 }} width='100vw' height='100vh'>
-            {pathsDs.map((d, i) => <path strokeWidth='3' fill='none' stroke='black' d={d} />)}
-        </svg>
+            <defs>
+                <marker id='Arrow'
+                    markerWidth='5' markerHeight='5' viewBox='-6 -6 12 12'
+                    refX='-2' refY='0'
+                    markerUnits='strokeWidth'
+                    orient='auto'>
+                    <polygon points='-2,0 -5,5 5,0 -5,-5' fill='red' stroke='black' stroke-width='1px' />
+                </marker>
+            </defs>
+            {pathsDs.map((d, i) => <path strokeWidth='3' fill='none' stroke='black' d={d} marker-end='url(#Arrow)'/>)}
+        </svg >
     }
 
     generatePathsDs(heapObjectsReferences, heapVariableReferences, stackVariableReferences) {
