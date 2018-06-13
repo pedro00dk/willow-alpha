@@ -240,7 +240,7 @@ class InspectorPathDrawer extends React.Component {
                     <polygon points='-2,0 -5,5 5,0 -5,-5' fill='red' stroke='black' stroke-width='1px' />
                 </marker>
             </defs>
-            {pathsDs.map((d, i) => <path strokeWidth='3' fill='none' stroke='black' d={d} marker-end='url(#Arrow)'/>)}
+            {pathsDs.map((d, i) => <path strokeWidth='3' fill='none' stroke='black' d={d} marker-end='url(#Arrow)' />)}
         </svg >
     }
 
