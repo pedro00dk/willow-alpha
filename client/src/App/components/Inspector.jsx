@@ -63,6 +63,9 @@ class InspectorPathDrawer0 extends React.Component {
         return paths.map(([refBB, objBB]) => {
             let fromX = (refBB.left + refBB.right) / 2
             let fromY = (refBB.top + refBB.bottom) / 2
+            
+            // if (!refBB || !objBB)
+
             let toX = objBB.left + 10
             let toY = objBB.top + 15
 
@@ -101,7 +104,7 @@ class Inspector0 extends React.Component {
     render() {
         let { dispatch, debug } = this.props
 
-        let frameResponses = debug.responses.filter(response => response.event === 'frame')
+        let frameResponses = debug.responses.filter(response => !!response && response.event === 'frame')
         let lastFrameResponse = frameResponses.slice(-1)[0]
         let {
             reactObjects, heapObjectsReferences, heapVariableReferences
@@ -119,6 +122,8 @@ class Inspector0 extends React.Component {
         this.heapVariableReferences = heapVariableReferences
         this.stackVariableReferences = stackVariableReferences
 
+        console.log(reactFrames)
+
         return <div>
             <SplitPane
                 split={'vertical'}
@@ -129,7 +134,9 @@ class Inspector0 extends React.Component {
                 style={{ fontFamily: 'monospace', fontSize: 12, opacity: 0.75 }}
                 resizerClassName={'border'}
             >
+                <div>
                 {reactFrames}
+                </div>
                 {
                     referencedReactObjects.map(object =>
                         <Draggable
@@ -219,8 +226,7 @@ class Inspector0 extends React.Component {
             Object.values(locals.stack)
                 .forEach(frame => reactFrames.push(this.generateFrame(frame, locals, stackVariableReferences)))
         }
-
-        return { reactFrames: reactFrames, stackVariableReferences: stackVariableReferences }
+        return { reactFrames, stackVariableReferences }
     }
 
     generateFrame(frame, locals, variableReferences) {
