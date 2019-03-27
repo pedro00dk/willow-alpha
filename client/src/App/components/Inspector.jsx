@@ -6,9 +6,83 @@ import SplitPane from 'react-split-pane'
 import { setObjectContext, objectDrag } from '../reducers/inspector'
 import { isNullOrUndefined } from 'util';
 
+class InspectorPathDrawer0 extends React.Component {
 
-@connect(state => ({ debug: state.debug }))
-export default class Inspector extends React.Component {
+    componentWillMount() {
+        this.updater = window.setInterval(
+            () => {
+                let { dispatch, inspector } = this.props
+
+                if (dispatch && inspector) dispatch(objectDrag())
+            },
+            100
+        )
+    }
+
+    componentWillUnmount() {
+        window.clearInterval(this.updater)
+    }
+
+    render() {
+        let { inspector } = this.props
+        let { heapObjectsReferences, heapVariableReferences, stackVariableReferences } = inspector
+        let pathsDs = this.generatePathsDs(heapObjectsReferences, heapVariableReferences, stackVariableReferences)
+
+        return <svg className='position-fixed' style={{ left: 0, top: 0, zIndex: -1 }} width='100vw' height='100vh'>
+            <defs>
+                <marker id='Arrow'
+                    markerWidth='5' markerHeight='5' viewBox='-6 -6 12 12'
+                    refX='-2' refY='0'
+                    markerUnits='strokeWidth'
+                    orient='auto'>
+                    <polygon points='-2,0 -5,5 5,0 -5,-5' fill='red' stroke='black' strokeWidth='1px' />
+                </marker>
+            </defs>
+            {pathsDs.map((d, i) => <path strokeWidth='3' fill='none' stroke='black' d={d} marker-end='url(#Arrow)' />)}
+        </svg >
+    }
+
+    generatePathsDs(heapObjectsReferences, heapVariableReferences, stackVariableReferences) {
+        if (!heapObjectsReferences || !heapVariableReferences || !stackVariableReferences) return []
+        let objectsBoundRects = {}
+        Object.keys(heapObjectsReferences)
+            .forEach(ref => objectsBoundRects[ref] = heapObjectsReferences[ref].getBoundingClientRect())
+        let paths = []
+        Object.keys(heapVariableReferences)
+            .forEach(ref => {
+                heapVariableReferences[ref].spans
+                    .filter(span => !isNullOrUndefined(span))
+                    .forEach(span => paths.push([span.getBoundingClientRect(), objectsBoundRects[ref]]))
+            })
+        Object.keys(stackVariableReferences)
+            .forEach(ref => {
+                stackVariableReferences[ref].spans
+                    .filter(span => !isNullOrUndefined(span))
+                    .forEach(span => paths.push([span.getBoundingClientRect(), objectsBoundRects[ref]]))
+            })
+        return paths.map(([refBB, objBB]) => {
+            let fromX = (refBB.left + refBB.right) / 2
+            let fromY = (refBB.top + refBB.bottom) / 2
+            let toX = objBB.left + 10
+            let toY = objBB.top + 15
+
+            let middleX = (fromX + toX) / 2
+            let middleY = (fromY + toY) / 2
+            let crossX = (toY - fromY) / 5
+            let crossY = -(toX - fromX) / 5
+            if (crossY > 0) {
+                crossX *= -1
+                crossY *= -1
+            }
+            let controlX = middleX + crossX
+            let controlY = middleY + crossY
+            return `M${fromX},${fromY} Q${controlX},${controlY} ${toX},${toY}`
+        })
+    }
+}
+const InspectorPathDrawer = connect(state => ({ inspector: state.inspector }))(InspectorPathDrawer0)
+
+class Inspector0 extends React.Component {
 
     componentDidUpdate() {
         let { dispatch } = this.props
@@ -205,80 +279,5 @@ export default class Inspector extends React.Component {
         return variable.length > crop ? variable.substring(0, crop - 2) + '..' : variable
     }
 }
-
-
-@connect(state => ({ inspector: state.inspector }))
-class InspectorPathDrawer extends React.Component {
-
-    componentWillMount() {
-        this.updater = window.setInterval(
-            () => {
-                let { dispatch, inspector } = this.props
-
-                if (dispatch && inspector) dispatch(objectDrag())
-            },
-            100
-        )
-    }
-
-    componentWillUnmount() {
-        window.clearInterval(this.updater)
-    }
-
-    render() {
-        let { inspector } = this.props
-        let { heapObjectsReferences, heapVariableReferences, stackVariableReferences } = inspector
-        let pathsDs = this.generatePathsDs(heapObjectsReferences, heapVariableReferences, stackVariableReferences)
-
-        return <svg className='position-fixed' style={{ left: 0, top: 0, zIndex: -1 }} width='100vw' height='100vh'>
-            <defs>
-                <marker id='Arrow'
-                    markerWidth='5' markerHeight='5' viewBox='-6 -6 12 12'
-                    refX='-2' refY='0'
-                    markerUnits='strokeWidth'
-                    orient='auto'>
-                    <polygon points='-2,0 -5,5 5,0 -5,-5' fill='red' stroke='black' stroke-width='1px' />
-                </marker>
-            </defs>
-            {pathsDs.map((d, i) => <path strokeWidth='3' fill='none' stroke='black' d={d} marker-end='url(#Arrow)' />)}
-        </svg >
-    }
-
-    generatePathsDs(heapObjectsReferences, heapVariableReferences, stackVariableReferences) {
-        if (!heapObjectsReferences || !heapVariableReferences || !stackVariableReferences) return []
-        let objectsBoundRects = {}
-        Object.keys(heapObjectsReferences)
-            .forEach(ref => objectsBoundRects[ref] = heapObjectsReferences[ref].getBoundingClientRect())
-        let paths = []
-        Object.keys(heapVariableReferences)
-            .forEach(ref => {
-                heapVariableReferences[ref].spans
-                    .filter(span => !isNullOrUndefined(span))
-                    .forEach(span => paths.push([span.getBoundingClientRect(), objectsBoundRects[ref]]))
-            })
-        Object.keys(stackVariableReferences)
-            .forEach(ref => {
-                stackVariableReferences[ref].spans
-                    .filter(span => !isNullOrUndefined(span))
-                    .forEach(span => paths.push([span.getBoundingClientRect(), objectsBoundRects[ref]]))
-            })
-        return paths.map(([refBB, objBB]) => {
-            let fromX = (refBB.left + refBB.right) / 2
-            let fromY = (refBB.top + refBB.bottom) / 2
-            let toX = objBB.left + 10
-            let toY = objBB.top + 15
-
-            let middleX = (fromX + toX) / 2
-            let middleY = (fromY + toY) / 2
-            let crossX = (toY - fromY) / 5
-            let crossY = -(toX - fromX) / 5
-            if (crossY > 0) {
-                crossX *= -1
-                crossY *= -1
-            }
-            let controlX = middleX + crossX
-            let controlY = middleY + crossY
-            return `M${fromX},${fromY} Q${controlX},${controlY} ${toX},${toY}`
-        })
-    }
-}
+const Inspector = connect(state => ({ debug: state.debug }))(Inspector0)
+export default Inspector

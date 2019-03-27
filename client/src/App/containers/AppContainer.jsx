@@ -10,8 +10,7 @@ import OutputEditor from '../components/OutputEditor'
 import ScriptEditor from '../components/ScriptEditor'
 
 
-@connect(state => ({ exercise: state.exercise }))
-export default class AppContainer extends React.Component {
+class AppContainer0 extends React.Component {
 
     render() {
         return <div>
@@ -52,3 +51,5 @@ export default class AppContainer extends React.Component {
         </div>
     }
 }
+const AppContainer = connect(state => ({ exercise: state.exercise }))(AppContainer0)
+export default AppContainer

@@ -13,8 +13,7 @@ import stepOverBtn from './debugger/stepOverBtn.png'
 import stopBtn from './debugger/stopBtn.png'
 
 
-@connect(state => ({ debug: state.debug, input: state.input, output: state.output, script: state.script }))
-export default class Debugger extends React.Component {
+class Debugger0 extends React.Component {
 
     constructor(props) {
         super(props)
@@ -193,3 +192,7 @@ export default class Debugger extends React.Component {
         </div>
     }
 }
+const Debugger = connect(state => {
+    return ({ debug: state.debug, input: state.input, output: state.output, script: state.script })
+})(Debugger0)
+export default Debugger

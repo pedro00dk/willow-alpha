@@ -6,8 +6,7 @@ import TextEditor from './TextEditor'
 import { setScript } from '../reducers/script'
 
 
-@connect(state => ({ script: state.script }))
-export default class ScriptEditor extends React.Component {
+class ScriptEditor0 extends React.Component {
 
     render() {
         let { script } = this.props
@@ -40,3 +39,5 @@ export default class ScriptEditor extends React.Component {
         />
     }
 }
+const ScriptEditor = connect(state => ({ script: state.script }))(ScriptEditor0)
+export default ScriptEditor

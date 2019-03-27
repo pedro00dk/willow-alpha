@@ -4,8 +4,7 @@ import { fetchExercises } from '../reducers/exercise'
 import { setScript } from '../reducers/script'
 
 
-@connect(state => ({ exercise: state.exercise }))
-export default class Header extends React.Component {
+class Header0 extends React.Component {
 
     componentDidMount() {
         const { dispatch } = this.props
@@ -50,3 +49,5 @@ export default class Header extends React.Component {
             )
     }
 }
+const Header = connect(state => ({ exercise: state.exercise }))(Header0)
+export default Header
