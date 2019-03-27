@@ -64,7 +64,10 @@ class InspectorPathDrawer0 extends React.Component {
             let fromX = (refBB.left + refBB.right) / 2
             let fromY = (refBB.top + refBB.bottom) / 2
             
-            // if (!refBB || !objBB)
+            if (!refBB || !objBB) {
+                console.log('ferrou')
+                return ''
+            }
 
             let toX = objBB.left + 10
             let toY = objBB.top + 15
@@ -122,7 +125,7 @@ class Inspector0 extends React.Component {
         this.heapVariableReferences = heapVariableReferences
         this.stackVariableReferences = stackVariableReferences
 
-        console.log(reactFrames)
+        console.log(referencedReactObjects)
 
         return <div>
             <SplitPane
@@ -137,16 +140,19 @@ class Inspector0 extends React.Component {
                 <div>
                 {reactFrames}
                 </div>
+                <div className='w-100 h-100'>
                 {
-                    referencedReactObjects.map(object =>
-                        <Draggable
-                            onDrag={event => dispatch(objectDrag())}
-                            bounds={'parent'}
+                    referencedReactObjects.map(object => {
+                        return <Draggable
+                        onDrag={event => dispatch(objectDrag())}
+                        bounds={'parent'}
                         >
                             {object}
                         </Draggable>
+                    }
                     )
                 }
+                </div>
             </SplitPane>
             <InspectorPathDrawer />
         </div>
